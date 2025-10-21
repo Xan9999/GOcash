@@ -25,7 +25,8 @@ export default function App() {
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.projectId;
   console.log('Project ID:', projectId);  // Debug: Should log your ID
-  const API_BASE = 'http://192.168.0.109:5000';
+  const API_BASE = 'http://192.168.0.115:5000';
+  // const API_BASE = 'http://192.168.0.109:5000'; 
 
   // Notification handler (skip on web)
   useEffect(() => {
