@@ -50,3 +50,7 @@ yarn-error.log
 node_modules\.bin
 frontend\venv
 backend\venv
+*.cfg
+
+----database----
+backend\payments.db
