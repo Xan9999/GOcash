@@ -61,31 +61,8 @@ export default function App() {
       activeOpacity={0.7}
     >
       <View style={styles.cell}>
-        <Text style={styles.label}>ID:</Text>
-        <Text>{item.id}</Text>
-      </View>
-      <View style={styles.cell}>
-        <Text style={styles.label}>Name:</Text>
-        <Text>{item.name}</Text>
-      </View>
-      <View style={styles.cell}>
-        <Text style={styles.label}>Email:</Text>
-        <Text>{item.email}</Text>
-      </View>
-      <View style={styles.cell}>
-        <Text style={styles.label}>Phone:</Text>
-        <Text>{item.phone}</Text>
-      </View>
-      <View style={styles.cell}>
-        <Text style={styles.label}>IBAN:</Text>
-        <Text>{item.iban}</Text>
-      </View>
-      <View style={styles.cell}>
-        <Text style={styles.label}>Balance:</Text>
-        <Text style={styles.balance}>${item.balance.toFixed(2)}</Text>
-      </View>
-      <View style={styles.actionCell}>
-        <Text style={styles.actionText}>Send $10</Text>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.label}>{item.phone}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -150,10 +127,15 @@ const styles = StyleSheet.create({
     minWidth: 100,
     marginRight: 10,
   },
+  name: {
+    fontWeight: 'bold',
+    color: '#000000ff',
+    fontSize: 24,
+  },
   label: {
     fontWeight: 'bold',
-    color: '#666',
-    fontSize: 12,
+    color: '#838383ff',
+    fontSize: 15,
   },
   balance: {
     fontWeight: 'bold',

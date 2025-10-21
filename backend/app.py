@@ -36,11 +36,16 @@ def init_db():
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
         sample_users = [
-            ('Alice Johnson', 'alice@example.com', '+1-555-0101', 'ALICE1234567890'),
-            ('Bob Smith', 'bob@example.com', '+1-555-0102', 'BOB1234567891'),
-            ('Carol Davis', 'carol@example.com', '+1-555-0103', 'CAROL1234567892'),
-            ('David Wilson', 'david@example.com', '+1-555-0104', 'DAVID1234567893'),
-            ('Eve Brown', 'eve@example.com', '+1-555-0105', 'EVE1234567894')
+            ('Ana Novak', 'ana.novak@example.si', '+386-40-123-456', 'ANA1234567890'),
+            ('Bojan Kovač', 'bojan.kovac@example.si', '+386-41-234-567', 'BOJAN1234567891'),
+            ('Cvetka Zupan', 'cvetka.zupan@example.si', '+386-31-345-678', 'CVETKA1234567892'),
+            ('David Horvat', 'david.horvat@example.si', '+386-51-456-789', 'DAVID1234567893'),
+            ('Eva Mlakar', 'eva.mlakar@example.si', '+386-30-567-890', 'EVA1234567894'),
+            ('Franc Potočnik', 'franc.potocnik@example.si', '+386-41-678-901', 'FRANC1234567895'),
+            ('Gabrijela Zajc', 'gabrijela.zajc@example.si', '+386-40-789-012', 'GABRIJELA1234567896'),
+            ('Herman Kralj', 'herman.kralj@example.si', '+386-31-890-123', 'HERMAN1234567897'),
+            ('Irena Vovk', 'irena.vovk@example.si', '+386-51-901-234', 'IRENA1234567898'),
+            ('Jure Bizjak', 'jure.bizjak@example.si', '+386-30-012-345', 'JURE1234567899')
         ]
         cursor.executemany('INSERT INTO users (name, email, phone, iban) VALUES (?, ?, ?, ?)', sample_users)
         
