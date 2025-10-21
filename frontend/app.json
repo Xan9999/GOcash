@@ -20,10 +20,18 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.mnejc.frontend"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8c13ad43-18d6-4c19-908f-d19bee5be889"
+      }
+    },
+    "projectId": "8c13ad43-18d6-4c19-908f-d19bee5be889",
+    "owner": "mnejc"
   }
 }
