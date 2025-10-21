@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+const server_ip = "192.168.0.109"
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -8,7 +9,7 @@ function App() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://192.168.0.109:5000/users');
+      const response = await fetch(`http://${server_ip}:5000/users`);
       const data = await response.json();
       setUsers(data);
       setMessage('');
@@ -21,7 +22,7 @@ function App() {
   const handleAddMoney = async (iban) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.109:5000/add_money/${iban}`, {
+      const response = await fetch(`http://${server_ip}:5000/add_money/${iban}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
