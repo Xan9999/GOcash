@@ -133,6 +133,20 @@ def transfer_amount(from_iban, to_iban, amount):
     conn.close()
     return new_from_balance, new_to_balance
 
+@app.route('/logout/<int:user_id>', methods=['POST'])
+def logout(user_id):
+    try:
+        conn = sqlite3.connect('payments.db')
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM push_tokens WHERE user_id = ?', (user_id,))
+        conn.commit()
+        conn.close()
+        print(f"Push token removed for user {user_id}")
+        return jsonify({'message': 'Logged out, push token removed'}), 200
+    except Exception as e:
+        print(f"Logout error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/users', methods=['GET'])
 def get_users():
     conn = sqlite3.connect('payments.db')
