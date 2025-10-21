@@ -1,11 +1,40 @@
 .App {
   text-align: center;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 .App-header {
   background-color: #282c34;
   padding: 20px;
   color: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background: white;
+  color: #282c34;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #f5f5f5;
 }
 
 button {
@@ -25,4 +54,5 @@ button:disabled {
 p {
   color: #61dafb;
   font-weight: bold;
+  margin: 10px 0;
 }
