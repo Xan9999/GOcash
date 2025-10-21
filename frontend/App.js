@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   TextInput,
+  ImageBackground
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,7 +32,7 @@ export default function App() {
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
   console.log('Project ID:', projectId);  // Debug
-  const API_BASE = 'http://192.168.0.109:5000';
+  const API_BASE = 'http://192.168.0.115:5000';
 
   // Notification handler (skip on web)
   useEffect(() => {
@@ -524,8 +525,12 @@ const HomeScreen = () => {
   }
 
   return (
+      <ImageBackground
+    source={require('./assets/Background.jpg')}
+    style={styles.backgroundImage}
+    resizeMode="cover">
     <View style={styles.container}>
-      <Modal visible={showLogin} animationType="slide">
+      <Modal visible={showLogin} animationType="slide" transparent>
         <View style={styles.loginContainer}>
           <Text style={styles.title}>Login to Payment App</Text>
           <Text style={styles.subtitle}>Select your account:</Text>
@@ -544,24 +549,27 @@ const HomeScreen = () => {
       {!showLogin && currentScreen === 'transfer' && <TransferScreen />}
       {!showLogin && currentScreen === 'requests' && <RequestsScreen />}
     </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#282c34',
-    padding: 20,
+    backgroundColor: 'rgba(40, 44, 52, 0.5)',
   },
   loginContainer: {
     flex: 1,
-    backgroundColor: '#282c34',
-    padding: 20,
+    backgroundColor: 'rgba(40, 44, 52, 0.5)',
   },
   homeContainer: {
     flex: 1,
-    backgroundColor: '#282c34',
-    padding: 20,
+    backgroundColor: 'rgba(40, 44, 52, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
