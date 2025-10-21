@@ -48,6 +48,48 @@ export default function App() {
     });
     return () => subscription?.remove();
   }, [currentUser]);  // Depend on currentUser to re-subscribe if user changes
+  
+  // --- Polling + visibility/focus refresh for web to keep pending requests up-to-date ---
+  useEffect(() => {
+    // Only enable on web (mobile uses push notifications)
+    if (Platform.OS !== 'web') return;
+    if (!currentUser) return;
+
+    console.log('Starting web polling & visibility handlers for pending requests');
+
+    // Immediately fetch once when effect runs
+    fetchPendingRequests();
+
+    // Poll every 10 seconds
+    const POLL_MS = 10000;
+    const intervalId = setInterval(() => {
+      fetchPendingRequests();
+    }, POLL_MS);
+
+    // Refresh when tab becomes visible (user returns to tab)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Tab visible — refresh pending requests');
+        fetchPendingRequests();
+      }
+    };
+
+    // Refresh when window gains focus
+    const onFocus = () => {
+      console.log('Window focus — refresh pending requests');
+      fetchPendingRequests();
+    };
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      console.log('Stopping web polling & visibility handlers');
+      clearInterval(intervalId);
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [currentUser]); // re-run when login changes
 
   const fetchUsers = async () => {
     console.log('Fetching users...');
@@ -298,47 +340,86 @@ export default function App() {
     </View>
   );
 
-  // Home Screen
-  const HomeScreen = () => {
-    const hasPending = pendingRequests.length > 0;
-    return (
-      <View style={styles.homeContainer}>
-        <Text style={styles.homeTitle}>Welcome, {currentUser?.name}!</Text>
-        <Text style={styles.subtitle}>What would you like to do?</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={() => {
-              setIsRequestFlow(false);
-              setCurrentScreen('contacts');
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Send Money</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.receiveButton}
-            onPress={() => {
-              setIsRequestFlow(true);
-              setCurrentScreen('contacts');
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Request Money</Text>
-          </TouchableOpacity>
-        </View>
-        {hasPending && (
-          <TouchableOpacity
-            style={styles.pendingButton}
-            onPress={() => setCurrentScreen('requests')}
-          >
-            <Text style={styles.pendingText}>View {pendingRequests.length} Pending Request{pendingRequests.length > 1 ? 's' : ''}</Text>
-          </TouchableOpacity>
-        )}
-        {message ? <Text style={styles.message}>{message}</Text> : null}
+const handleLogout = async () => {
+  if (!currentUser) return;
+  setLoading(true);
+  try {
+    // Inform backend to remove push token (so device no longer receives pushes)
+    console.log('Logging out user', currentUser.id);
+    try {
+      await fetch(`${API_BASE}/logout/${currentUser.id}`, {
+        method: 'POST',
+      });
+    } catch (err) {
+      console.warn('Logout request to server failed:', err);
+      // continue anyway - local logout still happens
+    }
+
+    // Clear persisted login on device
+    await AsyncStorage.removeItem('currentUserId');
+    setCurrentUser(null);
+    setShowLogin(true);
+    setCurrentScreen('home');
+    setMessage('Logged out.');
+  } catch (error) {
+    console.error('Logout error:', error);
+    Alert.alert('Logout Error', error.message || 'Failed to logout.');
+  }
+  setLoading(false);
+};
+
+// --- HomeScreen: add a Logout button top-right ---
+// Replace your existing HomeScreen component with this updated version:
+
+const HomeScreen = () => {
+  const hasPending = pendingRequests.length > 0;
+  return (
+    <View style={styles.homeContainer}>
+      {/* Logout button top-right */}
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={handleLogout}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.homeTitle}>Welcome, {currentUser?.name}!</Text>
+      <Text style={styles.subtitle}>What would you like to do?</Text>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={() => {
+            setIsRequestFlow(false);
+            setCurrentScreen('contacts');
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>Send Money</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.receiveButton}
+          onPress={() => {
+            setIsRequestFlow(true);
+            setCurrentScreen('contacts');
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>Request Money</Text>
+        </TouchableOpacity>
       </View>
-    );
-  };
+      {hasPending && (
+        <TouchableOpacity
+          style={styles.pendingButton}
+          onPress={() => setCurrentScreen('requests')}
+        >
+          <Text style={styles.pendingText}>View {pendingRequests.length} Pending Request{pendingRequests.length > 1 ? 's' : ''}</Text>
+        </TouchableOpacity>
+      )}
+      {message ? <Text style={styles.message}>{message}</Text> : null}
+    </View>
+  );
+};
 
   // Contacts Screen
   const ContactsScreen = () => (
@@ -720,5 +801,20 @@ const styles = StyleSheet.create({
   },
   loadingSpinner: {
     marginTop: 10,
+  },  
+  logoutButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    backgroundColor: '#f44336',
   },
+  logoutText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+
 });
