@@ -8,7 +8,7 @@ function App() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/users');
+      const response = await fetch('http://192.168.0.109:5000/users');
       const data = await response.json();
       setUsers(data);
       setMessage('');
@@ -21,7 +21,7 @@ function App() {
   const handleAddMoney = async (iban) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/add_money/${iban}`, {
+      const response = await fetch(`http://192.168.0.109:5000/add_money/${iban}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -47,15 +47,25 @@ function App() {
         <table>
           <thead>
             <tr>
+              <th>ID</th>
               <th>Name</th>
+              <th>Email</th>
               <th>Phone</th>
+              <th>IBAN</th>
+              <th>Balance</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
               <tr key={user.id} onClick={() => handleAddMoney(user.iban)} className="clickable-row">
+                <td>{user.id}</td>
                 <td>{user.name}</td>
+                <td>{user.email}</td>
                 <td>{user.phone}</td>
+                <td>{user.iban}</td>
+                <td>${(user.balance || 0).toFixed(2)}</td>
+                <td>Send $10</td>
               </tr>
             ))}
           </tbody>

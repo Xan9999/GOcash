@@ -66,7 +66,8 @@ def get_users():
     users = cursor.fetchall()
     conn.close()
     return jsonify([{
-        'id': row[0], 'name': row[1], 'phone': row[3]
+        'id': row[0], 'name': row[1], 'email': row[2], 'phone': row[3],
+        'iban': row[4], 'balance': row[5]
     } for row in users])
 
 @app.route('/add_money/<iban>', methods=['POST'])
@@ -78,10 +79,14 @@ def add_money(iban):
         # Get current balance (or 0 if none)
         cursor.execute('SELECT balance FROM bank_balances WHERE iban = ?', (iban,))
         result = cursor.fetchone()
-
-        new_balance = result[0] + 10.0
-        cursor.execute('UPDATE bank_balances SET balance = ? WHERE iban = ?', (new_balance, iban))
-
+        
+        if result is None:
+            new_balance = 10.0
+            cursor.execute('INSERT INTO bank_balances (iban, balance) VALUES (?, ?)', (iban, new_balance))
+        else:
+            new_balance = result[0] + 10.0
+            cursor.execute('UPDATE bank_balances SET balance = ? WHERE iban = ?', (new_balance, iban))
+        
         conn.commit()
         conn.close()
         return jsonify({'message': 'Added 10 to balance', 'iban': iban, 'new_balance': new_balance})
@@ -89,4 +94,4 @@ def add_money(iban):
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host='0.0.0.0')  # Added host='0.0.0.0' for external access
