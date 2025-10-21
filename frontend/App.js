@@ -16,7 +16,8 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Replace with your computer's IP for phone testing (e.g., 'http://192.168.1.100:5000')
-  const API_BASE = 'http://192.168.0.109:5000';  // Change this for phone!
+  const API_BASE = 'http://192.168.0.115:5000';  // Change this for phone!
+  // const API_BASE = 'http://192.168.0.109:5000';  // Change this for phone!
 
   const fetchUsers = async () => {
     try {
