@@ -1,6 +1,6 @@
 frontend/
-venv\Scripts\activate
-python app.py
+venv\Scripts\activate \
+python app.py \ \ 
 
-backend/
+backend/ \
 npm start
