@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import styles from '../Styles';
 import { renderSplitContact } from './Renderers';
 
 const SplitSelectionScreen = ({
-  users,
+  users, // Note: users array passed here is already filtered by App.js
   currentUser,
   splitSelectedIds,
   toggleSplitSelect,
@@ -15,6 +15,7 @@ const SplitSelectionScreen = ({
   setUserSharePercent,
   loading
 }) => {
+  // Since App.js filters out the currentUser, the renderer doesn't need to check for isSelf
   const contactRenderer = renderSplitContact(styles, currentUser, splitSelectedIds, toggleSplitSelect);
 
   return (
@@ -24,7 +25,8 @@ const SplitSelectionScreen = ({
         onPress={() => {
           setSplitSelectedIds([]);
           setShares([]);
-          setUserSharePercent(100);
+          // Reset weights to default (100) on exit
+          setUserSharePercent(100); 
           setCurrentScreen('home');
         }}
         activeOpacity={0.7}
@@ -39,6 +41,7 @@ const SplitSelectionScreen = ({
         keyExtractor={(item) => item.id.toString()}
         style={styles.list}
         contentContainerStyle={{ paddingBottom: 50 }}
+        ListEmptyComponent={<Text style={styles.emptyText}>No other users available to split with.</Text>}
       />
       <TouchableOpacity
         style={[
@@ -61,4 +64,4 @@ const SplitSelectionScreen = ({
   );
 };
 
-export default SplitSelectionScreen;
+export default memo(SplitSelectionScreen);

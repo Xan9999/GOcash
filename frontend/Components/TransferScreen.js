@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import styles from '../Styles';
 
@@ -17,6 +17,9 @@ const TransferScreen = ({
     style={styles.container} 
     keyboardShouldPersistTaps="always" 
     contentContainerStyle={{ paddingHorizontal: 20, flexGrow: 1 }}
+    // The key ensures React treats this ScrollView as a consistent element,
+    // which helps prevent the keyboard from dismissing on state change.
+    key="transfer-scroll" 
   >
     <TouchableOpacity
       style={styles.backButton}
@@ -73,4 +76,4 @@ const TransferScreen = ({
   </ScrollView>
 );
 
-export default TransferScreen;
+export default memo(TransferScreen);

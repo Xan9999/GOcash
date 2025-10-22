@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, FlatList, ActivityIndicator, Alert } from 'react-native';
+import React, { useMemo, memo } from 'react';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import SliderComponent from '@react-native-community/slider';
 import styles from '../Styles';
 
@@ -9,13 +9,13 @@ const SplitConfirmScreen = ({
   users,
   splitAmountInput,
   setSplitAmountInput,
-  shares,
-  userSharePercent,
+  shares, // This is now the array of WEIGHTS
+  userSharePercent, // This is now the user's WEIGHT
   handleUserShareChange,
   handleOtherShareChange,
   handleConfirmSplit,
   equalizeShares,
-  memoizedAmounts,
+  memoizedAmounts, // Contains proportional amounts and percentages
   loading,
   message,
   setCurrentScreen,
@@ -24,47 +24,59 @@ const SplitConfirmScreen = ({
   setUserSharePercent
 }) => {
   if (splitSelectedIds.length === 0) {
-    // This handles the edge case if state gets corrupted or someone navigates back
     Alert.alert("Error", "No recipients selected for split. Returning to selection.");
     setCurrentScreen('split');
     return null;
   }
 
   const total = parseFloat(splitAmountInput) || 0;
-  const totalPercent = userSharePercent + shares.reduce((sum, p) => sum + p, 0);
-  const isExact = Math.abs(totalPercent - 100) < 0.01;
+  
+  const { user: userAmount, others: otherAmounts, normalizedPercents } = memoizedAmounts;
 
-  const selectedUsersWithAmounts = useMemo(() => 
-    splitSelectedIds.map((id, idx) => ({
-      ...users.find(u => u.id === id),
-      id: id,
-      isUser: false,
-      percent: shares[idx] || 0,
-      amount: memoizedAmounts.others[idx] || 0
-    })).filter(Boolean),
-  [splitSelectedIds, users, memoizedAmounts.others, shares]);
-
-  const totalOwed = selectedUsersWithAmounts.reduce((sum, u) => sum + u.amount, 0);
-  // Your net is your total share minus the total requested from others
-  const yourNet = memoizedAmounts.user - totalOwed;
-
-  const allPeople = useMemo(() => [
-    { 
-      name: currentUser.name, 
+  // Combine user and selected users with their calculated amounts and percentages
+  const allPeople = useMemo(() => {
+    // Current User data (Payer)
+    const userIndex = 0;
+    const people = [{ 
+      name: `${currentUser.name} (You)`, 
+      id: currentUser.id,
       isUser: true, 
-      percent: userSharePercent, 
-      amount: memoizedAmounts.user,
-      net: yourNet,
-      id: currentUser.id
-    },
-    ...selectedUsersWithAmounts
-  ], [currentUser, userSharePercent, memoizedAmounts.user, yourNet, selectedUsersWithAmounts]);
+      // Displayed percentage comes from memoizedAmounts
+      percent: normalizedPercents[userIndex] || 0,
+      amount: userAmount || 0,
+      shareIndex: -1, // Custom index for user
+      // Slider value comes from the raw WEIGHT state
+      weight: userSharePercent
+    }];
+
+    // Selected Recipient data
+    splitSelectedIds.forEach((id, shareIndex) => {
+      const u = users.find(x => x.id === id);
+      const percent = normalizedPercents[shareIndex + 1] || 0;
+      const amount = otherAmounts[shareIndex] || 0;
+      people.push({
+        name: u?.name || 'Unknown User',
+        id: id,
+        isUser: false,
+        percent: percent,
+        amount: amount,
+        shareIndex: shareIndex, // Corresponds to the index in the 'shares' array
+        // Slider value comes from the raw WEIGHT state
+        weight: shares[shareIndex]
+      });
+    });
+
+    return people;
+  }, [currentUser, splitSelectedIds, users, userAmount, otherAmounts, normalizedPercents, userSharePercent, shares]);
+
+  const totalWeight = userSharePercent + shares.reduce((sum, w) => sum + w, 0);
 
   return (
     <ScrollView 
       style={styles.container} 
       keyboardShouldPersistTaps="always" 
       contentContainerStyle={{ paddingHorizontal: 20, flexGrow: 1 }}
+      key="split-confirm-scroll" 
     >
       <TouchableOpacity
         style={styles.backButton}
@@ -78,9 +90,8 @@ const SplitConfirmScreen = ({
       >
         <Text style={styles.backText}>← Back to Selection</Text>
       </TouchableOpacity>
-      <Text style={styles.title}>Confirm Split</Text>
-      <Text style={styles.subtitle}>Enter total bill and adjust shares (Total %: {totalPercent.toFixed(0)}%)</Text>
-
+      <Text style={styles.title}>Split Check</Text>
+      
       {/* Total Input */}
       <View style={styles.amountContainer}>
         <Text style={styles.amountLabel}>Total Bill (€):</Text>
@@ -102,48 +113,43 @@ const SplitConfirmScreen = ({
 
       {/* Equalize Button */}
       <TouchableOpacity
-        style={[styles.sendButton, { width: '100%', alignSelf: 'center', marginBottom: 10 }]}
+        style={[styles.sendButton, { width: '100%', alignSelf: 'center', marginBottom: 20, marginTop: 10 }]}
         onPress={equalizeShares}
         activeOpacity={0.7}
       >
         <Text style={styles.buttonText}>Equal Split</Text>
       </TouchableOpacity>
-
-      {/* Share Preview */}
-      <Text style={[styles.subtitle, { marginTop: 10, marginBottom: 10 }]}>Share Preview:</Text>
       
-      {allPeople.map((item, index) => (
+      {/* Total Weight Indicator (REMOVED) */}
+      {/* Share List */}
+      {allPeople.map((item) => (
         <View style={styles.shareRow} key={item.id.toString()}>
           <View style={styles.cell}>
             <Text style={[
               styles.name, 
               item.isUser && { fontSize: 22, fontWeight: '800' }
             ]}>
-              {item.name} {item.isUser ? '(You)' : ''}
+              {item.name} 
             </Text>
             <Text 
-              style={[styles.label, { marginTop: 5 }]} 
+              style={[styles.label, { marginTop: 5, color: '#282c34', fontSize: 16 }]} 
               selectable={false}
             >
-              {item.isUser 
-                ? `Total Share: €${item.amount.toFixed(2)} | Net: €${item.net.toFixed(2)}` 
-                : `Pays: €${item.amount.toFixed(2)}`
-              }
+              Pays: €{item.amount.toFixed(2)}
             </Text>
-            <Text style={{fontSize: 14, color: '#FF9800', marginTop: 4 }}>
-                {item.percent.toFixed(0)}%
-            </Text>
+            {/* Percentage/Weight Indicator (REMOVED) */}
           </View>
           <View style={styles.sliderContainer}>
             <SliderComponent
               style={styles.slider}
               minimumValue={0}
               maximumValue={100}
-              value={item.percent}
+              // Bind value to the raw WEIGHT state
+              value={item.weight}
               onValueChange={(value) => 
                 item.isUser 
                   ? handleUserShareChange(value)
-                  : handleOtherShareChange(index - 1, value)
+                  : handleOtherShareChange(item.shareIndex, value)
               }
               minimumTrackTintColor="#FF9800"
               maximumTrackTintColor="#ddd"
@@ -157,10 +163,10 @@ const SplitConfirmScreen = ({
       <TouchableOpacity
         style={[
           styles.confirmButton, 
-          { backgroundColor: isExact ? '#4CAF50' : '#FF9800', marginTop: 20 }
+          { backgroundColor: '#4CAF50', marginTop: 20 }
         ]}
         onPress={handleConfirmSplit}
-        disabled={loading || total <= 0}
+        disabled={loading || total <= 0 || totalWeight === 0}
         activeOpacity={0.7}
       >
         <Text style={styles.confirmButtonText}>Create Split Requests</Text>
@@ -172,4 +178,4 @@ const SplitConfirmScreen = ({
   );
 };
 
-export default SplitConfirmScreen;
+export default memo(SplitConfirmScreen);

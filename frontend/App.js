@@ -38,11 +38,12 @@ export default function App() {
   const [pendingRequests, setPendingRequests] = useState([]); // For requests screen
   const [amountInput, setAmountInput] = useState('10'); // Amount input, default 10
 
-  // For split
+  // For split: NOTE: These are now treated as WEIGHTS (0-100), not fixed percentages.
   const [splitSelectedIds, setSplitSelectedIds] = useState([]); // array of user ids selected
   const [splitAmountInput, setSplitAmountInput] = useState('30'); // total bill in euros
-  const [shares, setShares] = useState([]); // Array of % (0-100) for each selected user, index matches splitSelectedIds
-  const [userSharePercent, setUserSharePercent] = useState(100);
+  // Setting initial weights to 50 for a middle-point starting position
+  const [shares, setShares] = useState([]); // Array of WEIGHTS (0-100) for each selected user
+  const [userSharePercent, setUserSharePercent] = useState(50); // User's WEIGHT, starts at 50
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
@@ -83,7 +84,7 @@ export default function App() {
 
         const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
         const pushToken = tokenData.data;
-        console.log('Push token for registration:', pushToken ? 'Fetched' : 'Failed');
+        // console.log('Push token for registration:', pushToken ? 'Fetched' : 'Failed'); // Removed verbose log
 
         if (pushToken) {
           const response = await fetch(`${API_BASE}/login/${currentUser.id}`, {
@@ -129,8 +130,10 @@ export default function App() {
       const data = await response.json();
       setPendingRequests(data);
       console.log('Pending requests updated:', data.length);
+      return data.length; // Return count for approval logic
     } catch (error) {
       console.error('Requests fetch error:', error);
+      return 0;
     }
   };
 
@@ -159,7 +162,8 @@ export default function App() {
       await AsyncStorage.setItem('currentUserId', user.id.toString());
       setCurrentUser(user);
       setShowLogin(false);
-      setMessage(`Logged in as ${user.name}${Platform.OS === 'web' ? ' (Web: No notifications)' : ''}`);
+      // Removed notification warning for web since it's now handled by platform check
+      setMessage(`Logged in as ${user.name}${Platform.OS === 'web' ? ' (Web: Notifications disabled)' : ''}`); 
       console.log('Login success, hiding modal');
       fetchUsers();
       fetchPendingRequests(); // Check for pending on login
@@ -253,8 +257,15 @@ export default function App() {
       if (!response.ok) throw new Error('Failed to approve');
       const data = await response.json();
       setMessage(`Approved request! Sent €${(amount_cents/100).toFixed(2)} to ${requesterName}.`);
-      fetchPendingRequests(); // Refresh list to remove the approved one
+      
+      const remainingCount = await fetchPendingRequests(); // Fetch and get new count
       fetchUsers(); // Update balances
+
+      // V1: Navigate back to home if no more requests
+      if (remainingCount === 0) {
+        setCurrentScreen('home');
+      }
+
     } catch (error) {
       Alert.alert('Error', error.message);
     }
@@ -268,7 +279,14 @@ export default function App() {
       });
       if (!response.ok) throw new Error('Failed to deny');
       setMessage(`Denied request from ${requesterName} for €${(amount_cents/100).toFixed(2)}.`);
-      fetchPendingRequests();
+      
+      const remainingCount = await fetchPendingRequests(); // Fetch and get new count
+
+      // V1: Navigate back to home if no more requests
+      if (remainingCount === 0) {
+        setCurrentScreen('home');
+      }
+
     } catch (error) {
       Alert.alert('Error', error.message);
     }
@@ -287,41 +305,61 @@ export default function App() {
       Alert.alert('Select people', 'Please select at least one person to split with.');
       return;
     }
-    const numOthers = splitSelectedIds.length;
-    const equalPercent = 100 / (numOthers + 1); // Include user for equal
-    setShares(Array(numOthers).fill(equalPercent));
-    setUserSharePercent(equalPercent); // User also equal
+    // Set initial WEIGHT for all to 50 for a middle starting point
+    const initialWeight = 50;
+    setShares(Array(splitSelectedIds.length).fill(initialWeight));
+    setUserSharePercent(initialWeight); 
     setSplitAmountInput('30');
     setCurrentScreen('split_confirm');
     setMessage('');
   };
 
-  const handleUserShareChange = (newPercent) => {
-    setUserSharePercent(Math.max(0, Math.min(100, newPercent)));
+  // HANDLERS now update the WEIGHT directly (0-100)
+  const handleUserShareChange = (newWeight) => {
+    setUserSharePercent(Math.max(0, newWeight));
   };
 
-  const handleOtherShareChange = (index, newPercent) => {
+  const handleOtherShareChange = (index, newWeight) => {
     const newShares = [...shares];
-    newShares[index] = Math.max(0, Math.min(100, newPercent));
+    newShares[index] = Math.max(0, newWeight);
     setShares(newShares);
   };
 
   const equalizeShares = () => {
-    if (splitSelectedIds.length === 0) return;
-    const numTotal = splitSelectedIds.length + 1; // + user
-    const equalPercent = 100 / numTotal;
-    setShares(Array(splitSelectedIds.length).fill(equalPercent));
-    setUserSharePercent(equalPercent);
+    // Set all weights to 50 for a proportional split that aligns with the initial midpoint
+    const initialWeight = 50;
+    setShares(Array(splitSelectedIds.length).fill(initialWeight));
+    setUserSharePercent(initialWeight);
   };
 
+  // CORE LOGIC: Calculate amounts and percentages based on proportional weights
   const memoizedAmounts = useMemo(() => {
     const total = parseFloat(splitAmountInput) || 0;
-    const userAmount = (userSharePercent / 100) * total;
-    const otherAmounts = splitSelectedIds.map((id, idx) => {
-      const percent = shares[idx] || 0;
-      return (percent / 100) * total;
-    });
-    return { user: userAmount, others: otherAmounts };
+    // allPercents are now treated as weights
+    const allWeights = [userSharePercent, ...shares]; 
+    const totalWeight = allWeights.reduce((sum, w) => sum + w, 0);
+    
+    if (totalWeight === 0) {
+      // If total weight is zero, everyone pays zero
+      return { 
+        user: 0, 
+        others: shares.map(() => 0), 
+        normalizedPercents: allWeights.map(() => 0) 
+      };
+    }
+
+    // Calculate proportional amounts (Individual Weight / Total Weight) * Total Bill
+    const userAmount = (userSharePercent / totalWeight) * total;
+    const otherAmounts = shares.map(weight => (weight / totalWeight) * total);
+    
+    // Calculate final, displayed percentage (Individual Weight / Total Weight) * 100
+    const normalizedAll = allWeights.map(weight => (weight / totalWeight) * 100);
+
+    return { 
+      user: userAmount, 
+      others: otherAmounts, 
+      normalizedPercents: normalizedAll 
+    };
   }, [splitSelectedIds, shares, splitAmountInput, userSharePercent]);
   
   const handleConfirmSplit = async () => {
@@ -335,30 +373,42 @@ export default function App() {
       return;
     }
 
-    // Normalize all shares (user + others) to 100%
-    const allPercents = [userSharePercent, ...shares];
-    const totalPercent = allPercents.reduce((sum, p) => sum + p, 0);
-    const normalizedAll = allPercents.map(p => totalPercent > 0 ? (p / totalPercent) * 100 : 0);
+    // Check if total weight is zero
+    const totalWeight = userSharePercent + shares.reduce((sum, w) => sum + w, 0);
+    if (totalWeight === 0) {
+      Alert.alert('Invalid Split', 'Please set a share for at least one person.');
+      return;
+    }
 
-    // User share (first) - but since payer, their % is for net calc
-    const othersNorm = normalizedAll.slice(1);
+    const { others: requestedAmounts } = memoizedAmounts;
 
-    // Amounts for others only (requests to them)
+    // The total split amount should always equal the total bill due to the proportional calculation.
+    const totalSplitAmount = requestedAmounts.reduce((sum, amount) => sum + amount, 0) + memoizedAmounts.user;
+    
+    // Safety check (should pass if totalWeight > 0)
+    if (Math.abs(totalSplitAmount - total) > 0.01) {
+      Alert.alert('Calculation Error', 'Internal calculation error: Total split amounts do not match the total bill.');
+      return;
+    }
+
     const total_cents = Math.round(total * 100);
-    const recipients = splitSelectedIds.map((uid, idx) => {
-      const percent = othersNorm[idx];
-      const amount_cents = Math.round((percent / 100) * total_cents);
-      return { user_id: uid, amount_cents };
-    });
+    
+    // Map to IBANs for recipients (the people who owe the user money)
+    const recipientsWithIban = splitSelectedIds.map((uid, idx) => {
+      const u = users.find(x => x.id === uid);
+      // We are requesting the 'other' amount from them
+      const amount_cents = Math.round(requestedAmounts[idx] * 100);
+      return { iban: u.iban, name: u.name, amount_cents };
+    }).filter(r => r.amount_cents > 0); // Only request if amount > 0
 
-    // Map to IBANs (same as before)
-    const recipientsWithIban = recipients.map(r => {
-      const u = users.find(x => x.id === r.user_id);
-      return { iban: u.iban, name: u.name, amount_cents: r.amount_cents };
-    });
+    if (recipientsWithIban.length === 0 && memoizedAmounts.user === total) {
+      Alert.alert('No Requests Needed', 'Since you are paying the full bill yourself, no requests are needed.');
+      return;
+    }
 
     const body = {
-      payer_iban: currentUser.iban,
+      // Payer is the current user, who is requesting money from the recipients
+      payer_iban: currentUser.iban, 
       recipients: recipientsWithIban.map(r => ({ iban: r.iban, amount_cents: r.amount_cents })),
       total_cents
     };
@@ -374,11 +424,11 @@ export default function App() {
       if (!response.ok) {
         throw new Error(data.error || 'Split request failed');
       }
-      setMessage(`Split created. Requested ${recipientsWithIban.length} unequal payments totaling €${total.toFixed(2)}.`);
+      setMessage(`Split created. Requested ${recipientsWithIban.length} payments totaling €${total.toFixed(2)}.`);
       // Reset
       setSplitSelectedIds([]);
       setShares([]);
-      setUserSharePercent(100);
+      setUserSharePercent(50); // Reset to 50
       setSplitAmountInput('30');
       setCurrentScreen('home');
       fetchPendingRequests();
@@ -538,7 +588,7 @@ export default function App() {
         )}
         {!showLogin && currentScreen === 'split' && (
           <SplitSelectionScreen
-            users={users}
+            users={users.filter(u => u.id !== currentUser.id)} // Filter out current user
             currentUser={currentUser}
             splitSelectedIds={splitSelectedIds}
             toggleSplitSelect={toggleSplitSelect}

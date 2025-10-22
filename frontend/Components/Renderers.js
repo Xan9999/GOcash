@@ -38,21 +38,20 @@ export const renderUser = (styles, currentUser, isRequestFlow, handleSelectRecip
 
 // Renderer for the Split selection screen
 export const renderSplitContact = (styles, currentUser, splitSelectedIds, toggleSplitSelect) => ({ item }) => {
-  const isSelf = item.id === currentUser?.id;
+  // NOTE: The current user is now filtered out in App.js, so we don't need the isSelf check.
   const selected = splitSelectedIds.includes(item.id);
   return (
     <TouchableOpacity
-      style={[styles.row, isSelf && styles.disabledRow, selected && styles.splitSelectedRow]}
-      onPress={() => !isSelf && toggleSplitSelect(item.id)}
-      disabled={isSelf}
+      style={[styles.row, selected && styles.splitSelectedRow]}
+      onPress={() => toggleSplitSelect(item.id)}
       activeOpacity={0.7}
     >
       <View style={styles.cell}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.label}>{item.email}</Text>
       </View>
-      <Text style={[styles.actionText, isSelf && styles.disabledText]}>
-        {isSelf ? 'You' : selected ? 'Selected' : 'Select'}
+      <Text style={styles.actionText}>
+        {selected ? 'Selected' : 'Select'}
       </Text>
     </TouchableOpacity>
   );
