@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Image } from 'react-native';
 import SliderComponent from '@react-native-community/slider';
 import styles from '../Styles';
 
@@ -38,7 +38,7 @@ const SplitConfirmScreen = ({
     // Current User data (Payer)
     const userIndex = 0;
     const people = [{ 
-      name: `${currentUser.name} (You)`, 
+      name: `${currentUser.name} (Vi)`, 
       id: currentUser.id,
       isUser: true, 
       // Displayed percentage comes from memoizedAmounts
@@ -88,13 +88,13 @@ const SplitConfirmScreen = ({
         }}
         activeOpacity={0.7}
       >
-        <Text style={styles.backText}>← Back to Selection</Text>
+         <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
-      <Text style={styles.title}>Split Check</Text>
+      <Text style={styles.title}>Razdeli plačilo</Text>
       
       {/* Total Input */}
       <View style={styles.amountContainer}>
-        <Text style={styles.amountdetailLabel}>Total Bill (€):</Text>
+        <Text style={styles.amountdetailLabel}>Skupaj plačilo (€):</Text>
         <TextInput
           style={styles.amountInput}
           value={splitAmountInput}
@@ -108,17 +108,11 @@ const SplitConfirmScreen = ({
           keyboardShouldPersistTaps="always"
           autoFocus={true}
           returnKeyType="done"
+          
         />
       </View>
 
       {/* Equalize Button */}
-      <TouchableOpacity
-        style={[styles.confirmButton, { width: '100%', alignSelf: 'center', marginBottom: 20, marginTop: 10 }]}
-        onPress={equalizeShares}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.buttonText}>Equal Split</Text>
-      </TouchableOpacity>
       
       {allPeople.map((item) => (
         <View style={styles.personRow} key={item.id.toString()}>
@@ -158,18 +152,27 @@ const SplitConfirmScreen = ({
           </View>
         </View>
       ))}
+      <View style={styles.container_splitconfirm_buttons}>  
+        <TouchableOpacity
+          style={styles.splitButton}
+          onPress={equalizeShares}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.confirmButtonText, {top: 20}]}>Enakomerno razdeli</Text>
+          <Image source={require('../assets/equalsplit.png')} style={[styles.icon, {position: 'relative', right: 120, bottom: 10}]} />
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[
-          styles.confirmButton, 
-          { backgroundColor: '#4CAF50', marginTop: 20 }
-        ]}
-        onPress={handleConfirmSplit}
-        disabled={loading || total <= 0 || totalWeight === 0}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.confirmButtonText}>Create Split Requests</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.splitconfirm_button}
+          onPress={handleConfirmSplit}
+          disabled={loading || total <= 0 || totalWeight === 0}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.confirmButtonText, {top: 20}]}>Ustvari prošnjo</Text>
+          <Image source={require('../assets/money.png')} style={[styles.icon, {position: 'relative', right: 100, bottom: 10}]} />
+        </TouchableOpacity>
+      </View>
+
       {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
       {message ? <Text style={styles.message}>{message}</Text> : null}
       <View style={{ height: 50 }} />

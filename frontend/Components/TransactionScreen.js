@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
 import styles from '../Styles';
 
 // Utility to format transaction data for display
@@ -32,14 +32,14 @@ const formatTransaction = (transaction, currentUserId) => {
       }
       break;
     case 'request_sent':
-      mainText = `Requested from ${otherPartyName}`;
+      mainText = `Prošnja za ${otherPartyName}`;
       if (isCompleted) {  // *** NEW: Handle approved (completed) ***
-        mainText += ' (Approved)';
+        mainText += ' (Potrjena)';
         color = '#2ecc71'; // Green: received money
         icon = '✅';
         amountText = `+€${transaction.amount.toFixed(2)}`;  // *** NEW: Show + for inflow ***
       } else if (isRejected) {
-        mainText += ' (Denied)';
+        mainText += ' (Zavrnjena)';
         color = '#e74c3c';  // *** CHANGED: Red for denied (was orange) ***
         icon = '❌';  // *** NEW: Better icon for denied ***
         amountText = '';  // *** NEW: No amount on denied ***
@@ -49,14 +49,14 @@ const formatTransaction = (transaction, currentUserId) => {
       }
       break;
     case 'request_received':
-      mainText = `Request from ${otherPartyName}`;
+      mainText = `Prošnja od ${otherPartyName}`;
       if (isCompleted) {  // *** NEW: Handle paid (completed) ***
-        mainText += ' (Paid)';
+        mainText += ' (Plačana)';
         color = '#e74c3c'; // Red: paid out
         icon = '✅';
         amountText = `-€${transaction.amount.toFixed(2)}`;  // *** NEW: Show - for outflow ***
       } else if (isRejected) {
-        mainText += ' (Denied)';
+        mainText += ' (Zavrnjena)';
         color = '#34495e';  // *** CHANGED: Neutral for denied (was red) ***
         icon = '❌';  // *** NEW: Better icon for denied ***
         amountText = '';  // *** NEW: No amount on denied ***
@@ -78,12 +78,12 @@ const formatTransaction = (transaction, currentUserId) => {
       break;
     case 'request_denied':
       if (isInitiator) { // Denied a request
-        mainText = `Denied request from ${otherPartyName}`;
+        mainText = `Zavrnjena prošnja od ${otherPartyName}`;
         color = isRejected ? '#e74c3c' : '#34495e'; // Darker color for denied action
         icon = '🚫';
         amountText = ''; // Denied requests don't involve money movement
       } else { // Request to user was denied
-        mainText = `Request to ${otherPartyName} Denied`;
+        mainText = `Prošnja za ${otherPartyName} zavrnjena`;
         color = isRejected ? '#e74c3c' : '#34495e'; // Darker color
         icon = '❌';
         amountText = '';
@@ -91,7 +91,7 @@ const formatTransaction = (transaction, currentUserId) => {
       break;
     case 'split_sent':
       // Simplified log for split initiation
-      mainText = `Initiated split with group`;
+      mainText = `Ustvarjeno razdeljevanje računa`;
       color = isRejected ? '#e74c3c' : '#34495e';
       icon = '👥';
       amountText = ''; // Split sends multiple requests, not one amount
@@ -123,7 +123,7 @@ const TransactionItem = ({ item }) => (
       </Text>
       {item.memo ? (
         <Text style={styles.transactionMemo} numberOfLines={1}>
-          Memo: {item.memo}
+          Opis: {item.memo}
         </Text>
       ) : null}
       <Text style={styles.transactionDate}>
@@ -161,10 +161,10 @@ const TransactionsScreen = ({
         onPress={() => setCurrentScreen('home')}
         activeOpacity={0.7}
       >
-        <Text style={styles.backText}>← Back to Home</Text>
+        <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
       
-      <Text style={styles.title}>Transaction History</Text>
+      <Text style={styles.title}>Zgodovina transakcij</Text>
       
       <FlatList
         data={formattedTransactions}
