@@ -26,7 +26,14 @@ import SplitConfirmScreen from './Components/SplitConfirmScreen';
 import GroupCreationScreen from './Components/GroupCreationScreen'; // NEW
 import { renderLoginUser } from './Components/Renderers';
 
-export default function App() {
+// Add image requires (place after imports)
+const btnImages = {
+  send: require('./assets/moneyout.png'),
+  request: require('./assets/moneyin.png'),
+  split: require('./assets/split.png'),
+};
+
+  export default function App() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -51,7 +58,7 @@ export default function App() {
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
-  const API_BASE = 'http://192.168.0.109:5000'; // Keep this here as it's logic/config
+  const API_BASE = 'http://192.168.0.115:5000'; // Keep this here as it's logic/config
 
   // Notification setup (mobile only, with token registration after login)
   useEffect(() => {
@@ -637,6 +644,8 @@ export default function App() {
             setIsRequestFlow={setIsRequestFlow}
             setSplitSelectedIds={setSplitSelectedIds}
             setShares={setShares}
+            btnImages={btnImages}  
+
           />
         )}
         {!showLogin && currentScreen === 'contacts' && (
