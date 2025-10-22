@@ -71,14 +71,14 @@ export const renderPendingRequest = (styles, onApprove, onDeny) => ({ item }) =>
       </View>
       <View style={styles.requestActions}>
         <TouchableOpacity
-          style={[styles.approveButton, { backgroundColor: '#4CAF50' }]}
+          style={[styles.approveButton, { backgroundColor: '#4CAF50', right: 100, position: 'absolute', }]}
           onPress={() => onApprove(item.id, item.amount * 100)}  // Pass cents back
           activeOpacity={0.7}
         >
           <Text style={styles.buttonText}>Plačaj</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.denyButton, { backgroundColor: '#f44336' }]}
+          style={[styles.denyButton, { backgroundColor: '#f44336' , right:10}]}
           onPress={() => onDeny(item.id)}
           activeOpacity={0.7}
         >
