@@ -23,11 +23,11 @@ const ContactsScreen = ({
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.backButton, styles.backButtonPadded]} // Apply new padding style
+        style={styles.backButton} // Apply new padding style
         onPress={() => setCurrentScreen('home')}
         activeOpacity={0.7}
       >
-        <Image source={require('../assets/backarrow.png')} style={styles.icon} />
+        <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
       <Text style={styles.title}>{isRequestFlow ? 'Zahtevek za plačilo' : 'Nakaži denar'}</Text>
       <FlatList

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Image } from 'react-native';
 import styles from '../Styles';
 
 const SplitSelectionScreen = ({
@@ -85,13 +85,13 @@ const SplitSelectionScreen = ({
         onPress={handleCancel}
         activeOpacity={0.7}
       >
-        <Text style={styles.backText}>← Cancel Split</Text>
+        <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
       <Text style={styles.title}>Split a Check</Text>
       <View style={styles.splitSelectHeader}>
-        <Text style={styles.splitSelectTitle}>Select People & Groups</Text>
+        <Text style={styles.splitSelectTitle}>Izberi ljudi ali skupino</Text>
         <Text style={styles.splitSelectCount}>
-          Selected: {splitSelectedIds.length} people (excluding you)
+          Izbranih: {splitSelectedIds.length} oseb
         </Text>
       </View>
       
@@ -112,19 +112,17 @@ const SplitSelectionScreen = ({
           style={[
             styles.confirmButton, 
             splitSelectedIds.length === 0 && styles.confirmButtonDisabled,
-            styles.confirmButton
           ]}
           onPress={() => handleConfirmSelection(splitSelectedIds)}
           disabled={splitSelectedIds.length === 0}
           activeOpacity={0.7}
         >
-          <Text style={styles.confirmButtonText}>Confirm Selection</Text>
+          <Text style={styles.confirmButtonText}>Potrdi </Text>
         </TouchableOpacity>
         
         {/* NEW: Group Creation Button */}
         <TouchableOpacity
           style={[
-            styles.confirmButton,
             styles.groupCreateButton,
             // Allow group creation even if no one is selected, but warn later.
             // splitSelectedIds.length === 0 && styles.confirmButtonDisabled
@@ -132,7 +130,7 @@ const SplitSelectionScreen = ({
           onPress={() => setCurrentScreen('group_create')}
           activeOpacity={0.7}
         >
-          <Text style={styles.confirmButtonText}>+</Text>
+                  <Image source={require('../assets/group.png')} style={styles.button_group_Icon} />
         </TouchableOpacity>
       </View>
     </View>

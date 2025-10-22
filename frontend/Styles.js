@@ -56,12 +56,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 20,
-    backgroundColor: 'rgba(40, 44, 52, 0.95)',
+    backgroundColor: 'rgba(71, 82, 108, 0.95)',
     position: 'absolute',
+    alignItems: 'center',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingBottom: Platform.OS === 'web' ? 20 : 40,
+    paddingBottom: Platform.OS === 'web' ? 10 : 30,
+
   },
 
   // MARK: Text & Titles
@@ -251,6 +253,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#61dafb',
     padding: 15,
     borderRadius: 8,
+    height: '100%',
+    width: '66%',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -297,11 +301,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   groupCreateButton: {
-    flex: 1,
+    flexDirection: 'row',
     backgroundColor: '#FF9800',
     justifyContent: 'center',
     alignItems: 'center',
+    width: '33%',
+    height: '100%',
     padding: 15,
+    borderRadius: 8,
   },
 
   // MARK: Positional/Utility
@@ -312,13 +319,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
 
   },
-  backButtonPadded: {
-    padding: 5,
-    borderRadius: 4,
-    width: 40,
-    height: 40,
-    color: '#61dafb', 
-  },
+
   logoutButton: {
     position: 'absolute',
     top: Platform.OS === 'web' ? 20 : 50,
@@ -427,6 +428,12 @@ const styles = StyleSheet.create({
     height: 30,
     tintColor: '#006400', // DarkGreen to match the Flik 2 title
   },
+  button_group_Icon: {
+    resizeMode: 'contain',
+    width: 22, // Smaller than circle button icons
+    height: 22,
+    tintColor: '#006400', // DarkGreen to match the Flik 2 title
+  },
 
   loadingSpinner: {
     marginTop: 10,
@@ -490,7 +497,7 @@ const styles = StyleSheet.create({
   splitSelectTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#4CAF50',
   },
   splitSelectCount: {
     fontSize: 14,
