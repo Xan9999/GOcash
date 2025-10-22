@@ -547,7 +547,6 @@ const btnImages = {
       if (!response.ok) {
         throw new Error(data.error || 'Split request failed');
       }
-      // setMessage(`Split created. Requested ${recipientsWithIban.length} payments totaling €${total.toFixed(2)}.`);
       // Reset
       setSplitSelectedIds([]);
       setShares([]);
