@@ -15,7 +15,7 @@ const HomeScreen = ({
 }) => {
   const hasPending = pendingRequests.length > 0;
   return (
-    <View style={styles.homeContainer}>
+    <View style={styles.centeredContainer}>
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
         <Text style={styles.buttonText}>Logout</Text>
       </TouchableOpacity>
@@ -59,11 +59,11 @@ const HomeScreen = ({
       </View>
 
       <TouchableOpacity
-        style={[styles.historyButton, { marginTop: 10 }]}
+        style={[styles.historyButton, { marginTop: 10 }]} 
         onPress={() => setCurrentScreen('transactions')}
         activeOpacity={0.7}
       >
-        <Text style={styles.buttonText}>Transaction History</Text>
+        <Text style={styles.historyButtonText}>Transaction History</Text>
       </TouchableOpacity>
       {hasPending && (
         <TouchableOpacity

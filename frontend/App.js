@@ -685,15 +685,12 @@ const btnImages = {
   // --- Main App Renderer and Router ---
   return (
     <ImageBackground
-      // You may need to create an empty asset file or replace this with a valid URL if running outside the original project context
-      // source={require('./assets/Background.jpg')}
-      source={{uri: 'https://placehold.co/1920x1080/282c34/61dafb?text=Payment+App+Background'}}
-      style={styles.backgroundImage}
+      style={styles.background}
       resizeMode="cover"
     >
       <View style={styles.container}>
         <Modal visible={showLogin} animationType="slide" transparent>
-          <View style={styles.loginContainer}>
+          <View style={styles.darkContainer}>
             <Text style={styles.title}>Login to Payment App</Text>
             <Text style={styles.subtitle}>Select your account:</Text>
             <FlatList
