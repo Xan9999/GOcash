@@ -488,6 +488,9 @@ const styles = StyleSheet.create({
     height: 60,
     // tintColor: '#fff',    // make icons white (optional)
   },
+    rotatedIcon: {
+    transform: [{ rotate: '180deg' }], // 👈 rotates the image 180°
+  },
 
 });
 

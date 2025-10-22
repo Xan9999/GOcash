@@ -42,7 +42,7 @@ const HomeScreen = ({
           }}
           activeOpacity={0.7}
         >
-          <Image source={btnImages.request} style={styles.icon} resizeMode="contain" />
+          <Image source={btnImages.request} style={[styles.icon, styles.rotatedIcon]} resizeMode="contain" />
         </TouchableOpacity>
 
         <TouchableOpacity
