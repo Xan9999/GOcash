@@ -202,7 +202,7 @@ const ReceiveQrScreen = ({
         <TouchableOpacity
           style={[
             styles.confirmButton,
-            { backgroundColor: '#4CAF50' }
+            { backgroundColor: 'green', alignSelf: 'center', height:40, top:10 } // Green for Receive/Request
           ]}
           onPress={handleGenerateQr}
           activeOpacity={0.7}
