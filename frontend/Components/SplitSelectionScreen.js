@@ -89,9 +89,9 @@ const SplitSelectionScreen = ({
       </TouchableOpacity>
       <Text style={styles.title}>Split a Check</Text>
       <View style={styles.splitSelectHeader}>
-        <Text style={styles.splitSelectTitle}>Select People & Groups</Text>
+        <Text style={styles.splitSelectTitle}>Izberi ali ustvari skupino</Text>
         <Text style={styles.splitSelectCount}>
-          Selected: {splitSelectedIds.length} people (excluding you)
+          Izbranih: {splitSelectedIds.length}
         </Text>
       </View>
       

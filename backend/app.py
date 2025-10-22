@@ -147,10 +147,26 @@ def init_db():
 
     if needs_seed:
         users = [
-            ("Alice Johnson", "alice@example.com", "123-456-7890", "DE123456780001"),
-            ("Bob Smith", "bob@example.com", "123-456-7891", "DE123456780002"),
-            ("Charlie Brown", "charlie@example.com", "123-456-7892", "DE123456780003"),
-            ("David Lee", "david@example.com", "123-456-7893", "DE123456780004"),
+            ("Ana Novak", "ana.novak@gmail.com", "+386 40 123 456", "SI56123456780000123"),
+            ("Marko Kovač", "marko.kovac@yahoo.com", "+386 31 987 654", "SI56123456780000234"),
+            ("Petra Zupan", "petra.zupan@outlook.com", "+386 41 555 111", "SI56123456780000345"),
+            ("Tomaž Horvat", "tomaz.horvat@gmail.com", "+386 40 222 333", "SI56123456780000456"),
+            ("Nina Mlakar", "nina.mlakar@hotmail.com", "+386 31 444 555", "SI56123456780000567"),
+            ("Luka Kralj", "luka.kralj@gmail.com", "+386 40 666 777", "SI56123456780000678"),
+            ("Maja Rozman", "maja.rozman@yahoo.com", "+386 41 888 999", "SI56123456780000789"),
+            ("Jan Potočnik", "jan.potocnik@gmail.com", "+386 31 123 789", "SI56123456780000890"),
+            ("Sara Bizjak", "sara.bizjak@gmail.com", "+386 40 234 567", "SI56123456780000901"),
+            ("Žan Kastelic", "zan.kastelic@outlook.com", "+386 41 345 678", "SI56123456780001012"),
+            ("Katarina Koren", "katarina.koren@gmail.com", "+386 31 456 789", "SI56123456780001123"),
+            ("Miha Medved", "miha.medved@yahoo.com", "+386 40 567 890", "SI56123456780001234"),
+            ("Tjaša Vidmar", "tjasa.vidmar@gmail.com", "+386 31 678 901", "SI56123456780001345"),
+            ("Rok Zajc", "rok.zajc@gmail.com", "+386 41 789 012", "SI56123456780001456"),
+            ("Eva Kos", "eva.kos@hotmail.com", "+386 40 890 123", "SI56123456780001567"),
+            ("Nejc Kosi", "nejc.kosi@gmail.com", "+386 31 901 234", "SI56123456780001678"),
+            ("Tina Lesjak", "tina.lesjak@yahoo.com", "+386 40 012 345", "SI56123456780001789"),
+            ("Gregor Hrovat", "gregor.hrovat@gmail.com", "+386 41 111 222", "SI56123456780001890"),
+            ("Barbara Turk", "barbara.turk@outlook.com", "+386 31 222 333", "SI56123456780001901"),
+            ("David Dolinar", "david.dolinar@gmail.com", "+386 40 333 444", "SI56123456780002012"),
         ]
         
         for name, email, phone, iban in users:

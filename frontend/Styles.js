@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'black',
     textAlign: 'center',
     marginBottom: 20,
     marginTop: Platform.OS === 'web' ? 50 : 80,
@@ -495,12 +495,13 @@ const styles = StyleSheet.create({
   },
   splitSelectTitle: {
     fontSize: 18,
+    color: 'black',
     fontWeight: 'bold',
-    color: 'white',
+    color: 'black',
   },
   splitSelectCount: {
     fontSize: 14,
-    color: '#ccc',
+    color: '#3f3f3fff',
     marginTop: 5,
   },
   rowTextContainer: {

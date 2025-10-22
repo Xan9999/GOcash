@@ -51,11 +51,9 @@ const GroupCreationScreen = ({
       
       {/* Group Name Input */}
       <View style={styles.inputContainer}>
-        {/* Use the new, more visible groupdetailLabel style */}
-        <Text style={styles.groupdetailLabel}>Group Name:</Text>
+        <Text style={styles.detailLabel}>Ime skupine:</Text>
         <TextInput
           style={styles.textInput}
-          placeholder="e.g., Dinner Crew, Gym Buddies"
           value={groupName}
           onChangeText={setGroupName}
           editable={!loading}
@@ -65,12 +63,14 @@ const GroupCreationScreen = ({
 
       {/* Selected Members Display */}
       <View style={styles.inputContainer}>
-        <Text style={styles.detailLabel}>Members Selected (Excluding You):</Text>
+        <Text style={styles.detailLabel}>Člani:</Text>
         <Text style={styles.textInputDisplay}>
-          {selectedMemberNames || 'No members selected.'}
+          {selectedMemberNames
+            ? `${currentUser?.name}, ${selectedMemberNames}`
+            : currentUser?.name || 'No members selected.'}
         </Text>
-        <Text style={[styles.detailLabel, { marginTop: 10 }]}>
-          {currentUser?.name} (You) is automatically included in the split.
+        <Text style={[styles.detailLabel, { color: 'red' }]}>
+          {splitSelectedIds.length === 0 && "Please go back and select members."}
         </Text>
         <Text style={[styles.detailLabel, { color: 'red' }]}>
           {splitSelectedIds.length === 0 && "Please go back and select members."}
