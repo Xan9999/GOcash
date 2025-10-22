@@ -25,6 +25,7 @@ import RequestsScreen from './Components/RequestsScreen';
 import SplitConfirmScreen from './Components/SplitConfirmScreen';
 import GroupCreationScreen from './Components/GroupCreationScreen'; // NEW
 import { renderLoginUser } from './Components/Renderers';
+import TransactionScreen from './Components/TransactionScreen';
 
 // Add image requires (place after imports)
 const btnImages = {
@@ -45,6 +46,8 @@ const btnImages = {
   const [isRequestFlow, setIsRequestFlow] = useState(false); // Send vs Request mode
   const [pendingRequests, setPendingRequests] = useState([]); // For requests screen
   const [amountInput, setAmountInput] = useState('10'); // Amount input, default 10
+  const [transactions, setTransactions] = useState([]);
+  const [refreshingTransactions, setRefreshingTransactions] = useState(false);
 
   // For split: NOTE: These are now treated as WEIGHTS (0-100), not fixed percentages.
   const [splitSelectedIds, setSplitSelectedIds] = useState([]); // array of user ids selected
@@ -208,6 +211,24 @@ const btnImages = {
     }
   };
 
+  const fetchTransactions = async () => {
+    if (!currentUser) return;
+    console.log('Fetching transactions...');
+    setRefreshingTransactions(true);
+    try {
+      const response = await fetch(`${API_BASE}/transactions?user_id=${currentUser.id}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      const data = await response.json();
+      setTransactions(data);
+      console.log('Transactions fetched:', data.length);
+    } catch (error) {
+      console.error('Fetch transactions error:', error);
+      setMessage('Error fetching transactions!');
+      Alert.alert('Error', error.message);
+    }
+    setRefreshingTransactions(false);
+  };
+
   const handleLogin = async (user) => {
     console.log('handleLogin called for user:', user.id, user.name);
     setLoading(true);
@@ -278,47 +299,61 @@ const btnImages = {
   };
 
   const handleConfirmTransfer = async () => {
-    const amount = parseFloat(amountInput);
-    if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a positive number.');
+    if (!selectedRecipient || !amountInput) {
+      setMessage('Please select a recipient and enter an amount.');
       return;
     }
-    if (!currentUser || !selectedRecipient) return;
-
+    const amountCents = Math.round(parseFloat(amountInput) * 100);
+    if (amountCents <= 0) {
+      setMessage('Amount must be positive.');
+      return;
+    }
     setLoading(true);
+    setMessage('');
     try {
-      // convert euros to cents integer
-      const amount_cents = Math.round(amount * 100);
-      const endpoint = isRequestFlow ? '/request_money' : '/add_money';
-      const body = isRequestFlow ? {
-        from_iban: selectedRecipient.iban,
-        to_iban: currentUser.iban,
-        amount_cents
-      } : {
-        from_iban: currentUser.iban,
-        to_iban: selectedRecipient.iban,
-        amount_cents
+      const body = {
+        amount_cents: amountCents,
+        memo: '',  // Add memo input later if needed
       };
+      let endpoint;
+      if (isRequestFlow) {
+        // Request mode: Use /request_money
+        endpoint = '/request_money';
+        body.requester_iban = currentUser.iban;
+        body.payer_iban = selectedRecipient.iban;
+        body.requester_name = currentUser.name;  // For notification
+      } else {
+        // Send mode: Use /transfer_money
+        endpoint = '/transfer_money';
+        body.sender_iban = currentUser.iban;
+        body.receiver_iban = selectedRecipient.iban;
+      }
+
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!response.ok) throw new Error('Failed to process transaction');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
       const data = await response.json();
-      const action = isRequestFlow ? 'requested' : 'sent';
-      setMessage(`${action.charAt(0).toUpperCase() + action.slice(1)} €${(data.amount_cents/100).toFixed(2)} ${isRequestFlow ? 'from' : 'to'} ${selectedRecipient.name}!`);
-      fetchUsers();
-      fetchPendingRequests();
-      setSelectedRecipient(null); // Clear selected recipient
-      setCurrentScreen('home');
+      setMessage(
+        `Success: ${isRequestFlow ? 'Request sent' : 'Money sent'} for €${amountInput}!`
+      );
+      setSelectedRecipient(null);
+      setAmountInput('10');
+      setCurrentScreen('home');  // Back to home after action
+      await fetchUsers();  // Refresh balances
     } catch (error) {
-      setMessage('Error processing transaction.');
+      console.error('Transfer/Request error:', error);
+      setMessage(`Error: ${error.message}`);
       Alert.alert('Error', error.message);
     }
     setLoading(false);
   };
-
+  
   const handleApproveRequest = async (requestId, amount_cents, requesterName) => {
     setLoading(true);
     try {
@@ -567,26 +602,56 @@ const btnImages = {
     }
   }, [currentUser, currentScreen]);
 
+  useEffect(() => {
+    if (currentUser) {
+      fetchGroups(currentUser.id);
+      fetchPendingRequests();
+      if (currentScreen === 'transactions') {
+        fetchTransactions();
+      }
+    }
+  }, [currentUser, currentScreen]);
+
   // Web polling & visibility handlers (from earlier fix)
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     if (!currentUser) return;
 
-    console.log('Starting web polling & visibility handlers for pending requests');
+  console.log('Starting web polling & visibility handlers for pending requests and transactions');
 
-    fetchPendingRequests();
+    // Initial fetch based on current screen
+    if (currentScreen === 'requests' || currentScreen === 'home') {  // *** ADDED: 'home' ***
+      fetchPendingRequests();
+    } else if (currentScreen === 'transactions') {
+      fetchTransactions();
+    }
 
     const POLL_MS = 10000;
     const intervalId = setInterval(() => {
-      fetchPendingRequests();
+      // Poll conditionally based on current screen
+      if (currentScreen === 'requests' || currentScreen === 'home') {  // *** ADDED: 'home' ***
+        fetchPendingRequests();
+      } else if (currentScreen === 'transactions') {
+        fetchTransactions();
+      }
     }, POLL_MS);
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        fetchPendingRequests();
+        if (currentScreen === 'requests' || currentScreen === 'home') {  // *** ADDED: 'home' ***
+          fetchPendingRequests();
+        } else if (currentScreen === 'transactions') {
+          fetchTransactions();
+        }
       }
     };
-    const onFocus = () => fetchPendingRequests();
+    const onFocus = () => {
+      if (currentScreen === 'requests' || currentScreen === 'home') {  // *** ADDED: 'home' ***
+        fetchPendingRequests();
+      } else if (currentScreen === 'transactions') {
+        fetchTransactions();
+      }
+    };
 
     window.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('focus', onFocus);
@@ -596,9 +661,7 @@ const btnImages = {
       window.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('focus', onFocus);
     };
-  }, [currentUser]);
-
-
+  }, [currentUser, currentScreen]);  // Already has currentScreen dep
   // Login Renderer
   const loginRenderer = renderLoginUser(styles, handleLogin);
 
@@ -677,6 +740,15 @@ const btnImages = {
             pendingRequests={pendingRequests}
             handleApproveRequest={handleApproveRequest}
             handleDenyRequest={handleDenyRequest}
+            setCurrentScreen={setCurrentScreen}
+          />
+        )}
+        {!showLogin && currentScreen === 'transactions' && (
+          <TransactionScreen 
+            currentUser={currentUser}
+            transactions={transactions}
+            fetchTransactions={fetchTransactions}
+            refreshing={refreshingTransactions}
             setCurrentScreen={setCurrentScreen}
           />
         )}
