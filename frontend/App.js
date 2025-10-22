@@ -3,21 +3,27 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   ActivityIndicator,
-  StyleSheet,
   Alert,
   Modal,
   Platform,
-  TextInput,
   ImageBackground,
-  ScrollView,  // Add this import
-  Slider  // Ensure this is imported from '@react-native-community/slider'
+  TouchableOpacity,
+  ScrollView, 
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import SliderComponent from '@react-native-community/slider';  // Rename to avoid conflict if needed
+
+// --- Import Components and Styles ---
+import styles from './Styles';
+import HomeScreen from './Components/HomeScreen';
+import ContactsScreen from './Components/ContactsScreen';
+import SplitSelectionScreen from './Components/SplitSelectionScreen';
+import TransferScreen from './Components/TransferScreen';
+import RequestsScreen from './Components/RequestsScreen';
+import SplitConfirmScreen from './Components/SplitConfirmScreen';
+import { renderLoginUser } from './Components/Renderers';
 
 export default function App() {
   const [users, setUsers] = useState([]);
@@ -26,21 +32,21 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [showLogin, setShowLogin] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [currentScreen, setCurrentScreen] = useState('home');  // 'home', 'contacts', 'transfer', 'requests', 'split'
-  const [selectedRecipient, setSelectedRecipient] = useState(null);  // For transfer/request
-  const [isRequestFlow, setIsRequestFlow] = useState(false);  // Send vs Request mode
-  const [pendingRequests, setPendingRequests] = useState([]);  // For requests screen
-  const [amountInput, setAmountInput] = useState('10');  // Amount input, default 10
+  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'contacts', 'transfer', 'requests', 'split', 'split_confirm'
+  const [selectedRecipient, setSelectedRecipient] = useState(null); // For transfer/request
+  const [isRequestFlow, setIsRequestFlow] = useState(false); // Send vs Request mode
+  const [pendingRequests, setPendingRequests] = useState([]); // For requests screen
+  const [amountInput, setAmountInput] = useState('10'); // Amount input, default 10
 
   // For split
   const [splitSelectedIds, setSplitSelectedIds] = useState([]); // array of user ids selected
   const [splitAmountInput, setSplitAmountInput] = useState('30'); // total bill in euros
-  const [shares, setShares] = useState([]);  // Array of % (0-100) for each selected user, index matches splitSelectedIds
+  const [shares, setShares] = useState([]); // Array of % (0-100) for each selected user, index matches splitSelectedIds
   const [userSharePercent, setUserSharePercent] = useState(100);
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
-  const API_BASE = 'http://192.168.0.109:5000';
+  const API_BASE = 'http://192.168.0.109:5000'; // Keep this here as it's logic/config
 
   // Notification setup (mobile only, with token registration after login)
   useEffect(() => {
@@ -95,8 +101,10 @@ export default function App() {
     registerToken();
   }, [currentUser, projectId]);
 
+  // --- API Handlers (Keep in App.js as they manage main state) ---
   const fetchUsers = async () => {
     console.log('Fetching users...');
+    setRefreshing(true);
     try {
       const response = await fetch(`${API_BASE}/users`);
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -110,6 +118,7 @@ export default function App() {
       Alert.alert('Error', error.message);
     }
     setLoading(false);
+    setRefreshing(false);
   };
 
   const fetchPendingRequests = async () => {
@@ -118,7 +127,6 @@ export default function App() {
       const response = await fetch(`${API_BASE}/pending_requests?user_id=${currentUser.id}`);
       if (!response.ok) throw new Error('Failed to fetch requests');
       const data = await response.json();
-      // server returns amount in cents; convert to euros for display when rendering
       setPendingRequests(data);
       console.log('Pending requests updated:', data.length);
     } catch (error) {
@@ -135,7 +143,7 @@ export default function App() {
       const response = await fetch(`${API_BASE}/login/${user.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pushToken: null }),  // Token sent later if available
+        body: JSON.stringify({ pushToken: null }), // Token sent later if available
       });
       const responseText = await response.text();
       console.log('Login response status:', response.status, 'body:', responseText);
@@ -154,7 +162,7 @@ export default function App() {
       setMessage(`Logged in as ${user.name}${Platform.OS === 'web' ? ' (Web: No notifications)' : ''}`);
       console.log('Login success, hiding modal');
       fetchUsers();
-      fetchPendingRequests();  // Check for pending on login
+      fetchPendingRequests(); // Check for pending on login
     } catch (error) {
       console.error('Full login error:', error);
       Alert.alert('Login Error', error.message);
@@ -187,9 +195,9 @@ export default function App() {
 
   const handleSelectRecipient = (recipient) => {
     setSelectedRecipient(recipient);
-    setAmountInput('10');  // Reset amount
+    setAmountInput('10'); // Reset amount
     setCurrentScreen('transfer');
-    setMessage('');  // Clear message
+    setMessage(''); // Clear message
   };
 
   const handleConfirmTransfer = async () => {
@@ -225,6 +233,7 @@ export default function App() {
       setMessage(`${action.charAt(0).toUpperCase() + action.slice(1)} €${(data.amount_cents/100).toFixed(2)} ${isRequestFlow ? 'from' : 'to'} ${selectedRecipient.name}!`);
       fetchUsers();
       fetchPendingRequests();
+      setSelectedRecipient(null); // Clear selected recipient
       setCurrentScreen('home');
     } catch (error) {
       setMessage('Error processing transaction.');
@@ -244,9 +253,8 @@ export default function App() {
       if (!response.ok) throw new Error('Failed to approve');
       const data = await response.json();
       setMessage(`Approved request! Sent €${(amount_cents/100).toFixed(2)} to ${requesterName}.`);
-      fetchPendingRequests();  // Refresh list to remove the approved one
-      fetchUsers();  // Update balances
-      // No setCurrentScreen('home') - stay on requests screen
+      fetchPendingRequests(); // Refresh list to remove the approved one
+      fetchUsers(); // Update balances
     } catch (error) {
       Alert.alert('Error', error.message);
     }
@@ -266,7 +274,7 @@ export default function App() {
     }
   };
 
-  // Split: toggle selection for multi-select
+  // --- Split Handlers ---
   const toggleSplitSelect = (userId) => {
     setSplitSelectedIds(prev => {
       if (prev.includes(userId)) return prev.filter(id => id !== userId);
@@ -280,13 +288,14 @@ export default function App() {
       return;
     }
     const numOthers = splitSelectedIds.length;
-    const equalPercent = 100 / (numOthers + 1);  // Include user for equal
+    const equalPercent = 100 / (numOthers + 1); // Include user for equal
     setShares(Array(numOthers).fill(equalPercent));
-    setUserSharePercent(equalPercent);  // User also equal
+    setUserSharePercent(equalPercent); // User also equal
     setSplitAmountInput('30');
     setCurrentScreen('split_confirm');
     setMessage('');
   };
+
   const handleUserShareChange = (newPercent) => {
     setUserSharePercent(Math.max(0, Math.min(100, newPercent)));
   };
@@ -296,22 +305,12 @@ export default function App() {
     newShares[index] = Math.max(0, Math.min(100, newPercent));
     setShares(newShares);
   };
-  const handleShareChange = (index, newPercent) => {
-    const newShares = [...shares];
-    newShares[index] = Math.max(0, Math.min(100, newPercent));
-    setShares(newShares);  // Safe: memoized amounts handle € updates
-  };
-
-  const handleExactInput = (index, text) => {
-    const num = parseFloat(text) || 0;
-    handleShareChange(index, num);
-  };
 
   const equalizeShares = () => {
-    if (shares.length === 0) return;
-    const numTotal = shares.length + 1;  // + user
+    if (splitSelectedIds.length === 0) return;
+    const numTotal = splitSelectedIds.length + 1; // + user
     const equalPercent = 100 / numTotal;
-    setShares(Array(shares.length).fill(equalPercent));
+    setShares(Array(splitSelectedIds.length).fill(equalPercent));
     setUserSharePercent(equalPercent);
   };
 
@@ -325,7 +324,6 @@ export default function App() {
     return { user: userAmount, others: otherAmounts };
   }, [splitSelectedIds, shares, splitAmountInput, userSharePercent]);
   
-  // Trigger split request creation
   const handleConfirmSplit = async () => {
     if (!currentUser) {
       Alert.alert('Not logged in');
@@ -343,7 +341,6 @@ export default function App() {
     const normalizedAll = allPercents.map(p => totalPercent > 0 ? (p / totalPercent) * 100 : 0);
 
     // User share (first) - but since payer, their % is for net calc
-    const userNorm = normalizedAll[0];
     const othersNorm = normalizedAll.slice(1);
 
     // Amounts for others only (requests to them)
@@ -391,6 +388,8 @@ export default function App() {
     }
     setLoading(false);
   };
+  // --- End Split Handlers ---
+
   // Load persisted login
   useEffect(() => {
     const loadUser = async () => {
@@ -408,10 +407,17 @@ export default function App() {
           return;
         }
       }
+      // If we have users but no saved login, still set loading to false to show login modal
+      setLoading(false); 
     };
     loadUser();
   }, [users.length]);
 
+  // Initial fetch
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+  
   // Refresh pending requests when on home screen or user changes
   useEffect(() => {
     if (currentUser && currentScreen === 'home') {
@@ -419,7 +425,7 @@ export default function App() {
     }
   }, [currentUser, currentScreen]);
 
-  // Web polling & visibility handlers (from earlier fix) - keep it for split updates too
+  // Web polling & visibility handlers (from earlier fix)
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     if (!currentUser) return;
@@ -450,433 +456,9 @@ export default function App() {
     };
   }, [currentUser]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
-  const renderLoginUser = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.loginRow} 
-      onPress={() => handleLogin(item)}
-      activeOpacity={0.8}
-    >
-      <Text style={styles.loginName}>{item.name}</Text>
-      <Text style={styles.loginDetail}>{item.email}</Text>
-    </TouchableOpacity>
-  );
-
-  const renderUser = ({ item }) => {
-    const isSelf = item.id === currentUser?.id;
-    return (
-      <TouchableOpacity
-        style={[styles.row, isSelf && styles.disabledRow]}
-        onPress={() => !isSelf && handleSelectRecipient(item)}
-        disabled={isSelf}
-        activeOpacity={0.7}
-      >
-        <View style={styles.cell}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.label}>{item.phone}</Text>
-          <Text style={styles.smallBalance}>Balance: €{(item.balance_cents/100).toFixed(2)}</Text>
-        </View>
-        <Text style={[styles.actionText, isSelf && styles.disabledText]}>
-          {isSelf ? 'You' : isRequestFlow ? 'Request From' : 'Send To'}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderSplitContact = ({ item }) => {
-    const isSelf = item.id === currentUser?.id;
-    const selected = splitSelectedIds.includes(item.id);
-    return (
-      <TouchableOpacity
-        style={[styles.row, isSelf && styles.disabledRow, selected && styles.splitSelectedRow]}
-        onPress={() => !isSelf && toggleSplitSelect(item.id)}
-        disabled={isSelf}
-        activeOpacity={0.7}
-      >
-        <View style={styles.cell}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.label}>{item.email}</Text>
-        </View>
-        <Text style={[styles.actionText, isSelf && styles.disabledText]}>
-          {isSelf ? 'You' : selected ? 'Selected' : 'Select'}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderPendingRequest = ({ item }) => (
-    <View style={styles.requestRow}>
-      <View style={styles.requestInfo}>
-        <Text style={styles.requestRequester}>{item.requester_name}</Text>
-        <Text style={styles.requestAmount}>€{(item.amount_cents/100).toFixed(2)}</Text>
-        <Text style={styles.requestTime}>{item.created_at}</Text>
-      </View>
-      <View style={styles.requestButtons}>
-        <TouchableOpacity
-          style={styles.approveButton}
-          onPress={() => handleApproveRequest(item.id, item.amount_cents, item.requester_name)}
-        >
-          <Text style={styles.approveText}>Approve</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.denyButton}
-          onPress={() => handleDenyRequest(item.id, item.requester_name, item.amount_cents)}
-        >
-          <Text style={styles.denyText}>Deny</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const HomeScreen = () => {
-    const hasPending = pendingRequests.length > 0;
-    return (
-      <View style={styles.homeContainer}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.homeTitle}>Welcome, {currentUser?.name}!</Text>
-        <Text style={styles.subtitle}>What would you like to do?</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={() => {
-              setIsRequestFlow(false);
-              setCurrentScreen('contacts');
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Send Money</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.receiveButton}
-            onPress={() => {
-              setIsRequestFlow(true);
-              setCurrentScreen('contacts');
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Request Money</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.splitButton}
-            onPress={() => {
-              setSplitSelectedIds([]);
-              setShares([]);  // Reset shares
-              setCurrentScreen('split');
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Split Check</Text>
-          </TouchableOpacity>
-        </View>
-        {hasPending && (
-          <TouchableOpacity
-            style={styles.pendingButton}
-            onPress={() => setCurrentScreen('requests')}
-          >
-            <Text style={styles.pendingText}>View {pendingRequests.length} Pending Request{pendingRequests.length > 1 ? 's' : ''}</Text>
-          </TouchableOpacity>
-        )}
-        {message ? <Text style={styles.message}>{message}</Text> : null}
-      </View>
-    );
-  };
-
-  // Contacts Screen
-  const ContactsScreen = () => (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => setCurrentScreen('home')}
-      >
-        <Text style={styles.backText}>← Back to Home</Text>
-      </TouchableOpacity>
-      <Text style={styles.title}>Select {isRequestFlow ? 'Payer' : 'Recipient'}</Text>
-      <FlatList
-        data={users}
-        renderItem={renderUser}
-        keyboardShouldPersistTaps="always"
-        keyExtractor={(item) => item.id.toString()}
-        refreshing={refreshing}
-        onRefresh={() => {
-          setRefreshing(true);
-          fetchUsers();
-          setRefreshing(false);
-        }}
-        style={styles.list}
-      />
-    </View>
-  );
-
-  // Split Screen
-  const SplitScreen = () => (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => {
-          setSplitSelectedIds([]);
-          setShares([]);
-          setUserSharePercent(100);
-          setCurrentScreen('home');
-        }}
-      >
-        <Text style={styles.backText}>← Back to Home</Text>
-      </TouchableOpacity>
-      <Text style={styles.title}>Split Check</Text>
-      <Text style={styles.subtitle}>Select people to split with (you are the payer)</Text>
-      <FlatList
-        data={users}
-        renderItem={renderSplitContact}
-        keyExtractor={(item) => item.id.toString()}
-        style={styles.list}
-      />
-      <TouchableOpacity
-        style={[
-          styles.confirmButton, 
-          { 
-            backgroundColor: splitSelectedIds.length > 0 ? '#FF9800' : '#ccc',
-            marginTop: 20 
-          }
-        ]}
-        onPress={handleConfirmSelection}
-        disabled={splitSelectedIds.length === 0}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.confirmButtonText}>
-          Confirm Selection ({splitSelectedIds.length} selected)
-        </Text>
-      </TouchableOpacity>
-      {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
-    </View>
-  );
-
-
-  // Split Confirm Screen (amount entry + sliders for % shares)
-  const SplitConfirmScreen = () => {
-    if (splitSelectedIds.length === 0) {
-      setCurrentScreen('split');
-      return null;
-    }
-
-    const total = parseFloat(splitAmountInput) || 0;
-    const totalPercent = userSharePercent + shares.reduce((sum, p) => sum + p, 0);
-    const isExact = Math.abs(totalPercent - 100) < 0.01;
-
-    const selectedUsersWithAmounts = useMemo(() => 
-      splitSelectedIds.map((id, idx) => ({
-        ...users.find(u => u.id === id),
-        isUser: false,
-        percent: shares[idx] || 0,
-        amount: memoizedAmounts.others[idx] || 0
-      })).filter(Boolean),
-    [splitSelectedIds, users, memoizedAmounts.others, shares]);
-
-    const totalOwed = selectedUsersWithAmounts.reduce((sum, u) => sum + u.amount, 0);
-    const yourNet = memoizedAmounts.user - totalOwed;
-
-    const allPeople = useMemo(() => [
-      { 
-        name: currentUser.name, 
-        isUser: true, 
-        percent: userSharePercent, 
-        amount: memoizedAmounts.user,
-        net: yourNet
-      },
-      ...selectedUsersWithAmounts
-    ], [currentUser.name, userSharePercent, memoizedAmounts.user, yourNet, selectedUsersWithAmounts]);
-
-    return (
-      <ScrollView 
-        style={styles.container} 
-        keyboardShouldPersistTaps="always" 
-        contentContainerStyle={{ flexGrow: 1 }}
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => setCurrentScreen('split')}
-        >
-          <Text style={styles.backText}>← Back to Selection</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Confirm Split</Text>
-        <Text style={styles.subtitle}>Enter total bill and adjust shares</Text>
-
-        {/* Total Input - Now in ScrollView for stability */}
-        <View style={styles.amountContainer}>
-          <Text style={styles.amountLabel}>Total Bill (€):</Text>
-          <TextInput
-            style={styles.amountInput}
-            value={splitAmountInput}
-            onChangeText={setSplitAmountInput}
-            keyboardType="decimal-pad"
-            placeholder="30.00"
-            placeholderTextColor="#999"
-            selectTextOnFocus={false}
-            contextMenuHidden={true}
-            blurOnSubmit={false}
-            keyboardShouldPersistTaps="always"
-            autoFocus={true}
-            returnKeyType="done"
-          />
-        </View>
-
-        {/* Equalize Button */}
-        <TouchableOpacity
-          style={[styles.sendButton, { width: '80%', alignSelf: 'center', marginBottom: 10 }]}
-          onPress={equalizeShares}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.buttonText}>Equal Split</Text>
-        </TouchableOpacity>
-
-        {/* FlatList */}
-        <Text style={[styles.subtitle, { marginTop: 10, marginBottom: 10 }]}>Share Preview:</Text>
-        <FlatList
-          data={allPeople}
-          keyExtractor={(item, index) => (item.id || index).toString()}
-          extraData={shares}
-          keyboardShouldPersistTaps="always"
-          renderItem={({ item, index }) => (
-            <View style={styles.shareRow}>
-              <View style={styles.cell}>
-                <Text style={[
-                  styles.name, 
-                  item.isUser && { fontSize: 26, fontWeight: '800' }
-                ]}>
-                  {item.name} {item.isUser ? '(You)' : ''}
-                </Text>
-                <Text 
-                  style={[styles.label, { marginTop: 5 }]} 
-                  selectable={false}
-                >
-                  {item.isUser 
-                    ? `Your share: €${item.amount.toFixed(2)} | Net: €${item.net.toFixed(2)}` 
-                    : `Pays €${item.amount.toFixed(2)}`
-                  }
-                </Text>
-              </View>
-              <View style={styles.sliderContainer}>
-                <SliderComponent  // Use renamed import if conflict
-                  style={styles.slider}
-                  minimumValue={0}
-                  maximumValue={100}
-                  value={item.percent}
-                  onValueChange={(value) => 
-                    item.isUser 
-                      ? handleUserShareChange(value)
-                      : handleOtherShareChange(index - 1, value)
-                  }
-                  minimumTrackTintColor="#FF9800"
-                  maximumTrackTintColor="#ddd"
-                  thumbTintColor="#FF9800"
-                  step={1}
-                  tapOffset={10}
-                  debug={false}
-                  // Add for better drag on mobile
-                  trackStyle={{ height: 4 }}
-                  thumbStyle={{ width: 20, height: 20 }}
-                  minimumTrackStyle={{}}
-                  maximumTrackStyle={{}}
-                />
-              </View>
-            </View>
-          )}
-          style={{ flex: 1 }}
-        />
-
-        <TouchableOpacity
-          style={[
-            styles.confirmButton, 
-            { backgroundColor: isExact ? '#4CAF50' : '#FF9800' }
-          ]}
-          onPress={handleConfirmSplit}
-          disabled={loading || total <= 0}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.confirmButtonText}>Create Split Requests</Text>
-        </TouchableOpacity>
-        {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
-        {message ? <Text style={styles.message}>{message}</Text> : null}
-      </ScrollView>
-    );
-  };
-  // Transfer/Request Screen
-  const TransferScreen = () => (
-    <ScrollView 
-      style={styles.container} 
-      keyboardShouldPersistTaps="always" 
-      contentContainerStyle={{ flexGrow: 1 }}
-    >
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => {
-          setSelectedRecipient(null);
-          setCurrentScreen('contacts');
-        }}
-      >
-        <Text style={styles.backText}>← Back to Contacts</Text>
-      </TouchableOpacity>
-      <Text style={styles.title}>{isRequestFlow ? `Request from ${selectedRecipient?.name}` : `Send to ${selectedRecipient?.name}`}</Text>
-      <View style={styles.recipientInfo}>
-        <Text style={styles.recipientName}>{selectedRecipient?.name}</Text>
-        <Text style={styles.recipientPhone}>{selectedRecipient?.phone}</Text>
-      </View>
-      <View style={styles.amountContainer}>
-        <Text style={styles.amountLabel}>Amount (€):</Text>
-        <TextInput
-          style={styles.amountInput}
-          value={amountInput}
-          onChangeText={setAmountInput}
-          keyboardType="decimal-pad"
-          placeholder="10"
-          placeholderTextColor="#999"
-          selectTextOnFocus={false}
-          contextMenuHidden={true}
-          blurOnSubmit={false}
-          keyboardShouldPersistTaps="always"
-          autoFocus={true}
-          returnKeyType="done"
-          onSubmitEditing={handleConfirmTransfer}
-        />
-      </View>
-      <TouchableOpacity
-        style={[
-          styles.confirmButton,
-          { backgroundColor: isRequestFlow ? '#4CAF50' : '#61dafb' }
-        ]}
-        onPress={handleConfirmTransfer}
-        disabled={loading}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.confirmButtonText}>{isRequestFlow ? 'Request Money' : 'Confirm Send'}</Text>
-      </TouchableOpacity>
-      {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
-      {message ? <Text style={styles.message}>{message}</Text> : null}
-    </ScrollView>
-  );
-  // Requests Screen
-  const RequestsScreen = () => (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => setCurrentScreen('home')}
-      >
-        <Text style={styles.backText}>← Back to Home</Text>
-      </TouchableOpacity>
-      <Text style={styles.title}>Pending Requests</Text>
-      <FlatList
-        data={pendingRequests}
-        renderItem={renderPendingRequest}
-        keyExtractor={(item) => item.id.toString()}
-        style={styles.list}
-        ListEmptyComponent={<Text style={styles.emptyText}>No pending requests.</Text>}
-      />
-    </View>
-  );
+  // Login Renderer
+  const loginRenderer = renderLoginUser(styles, handleLogin);
 
   if (loading && users.length === 0) {
     return (
@@ -887,362 +469,117 @@ export default function App() {
     );
   }
 
+  // --- Main App Renderer and Router ---
   return (
-      <ImageBackground
-    source={require('./assets/Background.jpg')}
-    style={styles.backgroundImage}
-    resizeMode="cover">
-    <View style={styles.container}>
-      <Modal visible={showLogin} animationType="slide" transparent>
-        <View style={styles.loginContainer}>
-          <Text style={styles.title}>Login to Payment App</Text>
-          <Text style={styles.subtitle}>Select your account:</Text>
-          <FlatList
-            data={users}
-            renderItem={renderLoginUser}
-            keyExtractor={(item) => item.id.toString()}
-            style={styles.loginList}
-          />
-          {loading && <ActivityIndicator size="small" color="#61dafb" style={styles.loadingSpinner} />}
-        </View>
-      </Modal>
+    <ImageBackground
+      // You may need to create an empty asset file or replace this with a valid URL if running outside the original project context
+      // source={require('./assets/Background.jpg')}
+      source={{uri: 'https://placehold.co/1920x1080/282c34/61dafb?text=Payment+App+Background'}}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Modal visible={showLogin} animationType="slide" transparent>
+          <View style={styles.loginContainer}>
+            <Text style={styles.title}>Login to Payment App</Text>
+            <Text style={styles.subtitle}>Select your account:</Text>
+            <FlatList
+              data={users}
+              renderItem={loginRenderer}
+              keyExtractor={(item) => item.id.toString()}
+              style={styles.loginList}
+            />
+            {loading && <ActivityIndicator size="small" color="#61dafb" style={styles.loadingSpinner} />}
+          </View>
+        </Modal>
 
-      {!showLogin && currentScreen === 'home' && <HomeScreen />}
-      {!showLogin && currentScreen === 'contacts' && <ContactsScreen />}
-      {!showLogin && currentScreen === 'transfer' && <TransferScreen />}
-      {!showLogin && currentScreen === 'requests' && <RequestsScreen />}
-      {!showLogin && currentScreen === 'split' && <SplitScreen />}
-      {!showLogin && currentScreen === 'split_confirm' && <SplitConfirmScreen />}
-    </View>
+        {!showLogin && currentScreen === 'home' && (
+          <HomeScreen 
+            currentUser={currentUser}
+            handleLogout={handleLogout}
+            pendingRequests={pendingRequests}
+            setCurrentScreen={setCurrentScreen}
+            setIsRequestFlow={setIsRequestFlow}
+            setSplitSelectedIds={setSplitSelectedIds}
+            setShares={setShares}
+          />
+        )}
+        {!showLogin && currentScreen === 'contacts' && (
+          <ContactsScreen 
+            users={users}
+            currentUser={currentUser}
+            isRequestFlow={isRequestFlow}
+            handleSelectRecipient={handleSelectRecipient}
+            setCurrentScreen={setCurrentScreen}
+            refreshing={refreshing}
+            fetchUsers={fetchUsers}
+          />
+        )}
+        {!showLogin && currentScreen === 'transfer' && (
+          <TransferScreen 
+            selectedRecipient={selectedRecipient}
+            isRequestFlow={isRequestFlow}
+            amountInput={amountInput}
+            setAmountInput={setAmountInput}
+            handleConfirmTransfer={handleConfirmTransfer}
+            setCurrentScreen={setCurrentScreen}
+            setSelectedRecipient={setSelectedRecipient}
+            loading={loading}
+            message={message}
+          />
+        )}
+        {!showLogin && currentScreen === 'requests' && (
+          <RequestsScreen 
+            pendingRequests={pendingRequests}
+            handleApproveRequest={handleApproveRequest}
+            handleDenyRequest={handleDenyRequest}
+            setCurrentScreen={setCurrentScreen}
+          />
+        )}
+        {!showLogin && currentScreen === 'split' && (
+          <SplitSelectionScreen
+            users={users}
+            currentUser={currentUser}
+            splitSelectedIds={splitSelectedIds}
+            toggleSplitSelect={toggleSplitSelect}
+            handleConfirmSelection={handleConfirmSelection}
+            setCurrentScreen={setCurrentScreen}
+            setSplitSelectedIds={setSplitSelectedIds}
+            setShares={setShares}
+            setUserSharePercent={setUserSharePercent}
+            loading={loading}
+          />
+        )}
+        {!showLogin && currentScreen === 'split_confirm' && (
+          <SplitConfirmScreen
+            currentUser={currentUser}
+            splitSelectedIds={splitSelectedIds}
+            users={users}
+            splitAmountInput={splitAmountInput}
+            setSplitAmountInput={setSplitAmountInput}
+            shares={shares}
+            userSharePercent={userSharePercent}
+            handleUserShareChange={handleUserShareChange}
+            handleOtherShareChange={handleOtherShareChange}
+            handleConfirmSplit={handleConfirmSplit}
+            equalizeShares={equalizeShares}
+            memoizedAmounts={memoizedAmounts}
+            loading={loading}
+            message={message}
+            setCurrentScreen={setCurrentScreen}
+            setSplitSelectedIds={setSplitSelectedIds}
+            setShares={setShares}
+            setUserSharePercent={setUserSharePercent}
+          />
+        )}
+
+        {/* Message bar for home, contacts, requests, split selection */}
+        {message && !showLogin && currentScreen !== 'transfer' && currentScreen !== 'split_confirm' && (
+            <View style={{ padding: 10, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <Text style={styles.message}>{message}</Text>
+            </View>
+        )}
+      </View>
     </ImageBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: 'rgba(40, 44, 52, 0.5)',
-  },
-  loginContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(40, 44, 52, 0.5)',
-  },
-  homeContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(40, 44, 52, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  homeTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  buttonContainer: {
-    marginVertical: 40,
-  },
-  sendButton: {
-    backgroundColor: '#61dafb',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-    width: 200,
-  },
-  receiveButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-    width: 200,
-  },
-  splitButton: {
-    backgroundColor: '#FF9800',
-    padding: 15,
-    borderRadius: 8,
-    width: 200,
-  },
-  pendingButton: {
-    backgroundColor: '#FF9800',
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  pendingText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1,
-  },
-  backText: {
-    color: '#61dafb',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-    marginBottom: 20,
-    marginTop: 60,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#ccc',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  recipientInfo: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 8,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  recipientName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#282c34',
-    marginBottom: 5,
-  },
-  recipientPhone: {
-    fontSize: 16,
-    color: '#666',
-  },
-  amountContainer: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  amountLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#282c34',
-    marginBottom: 10,
-  },
-  amountInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 10,
-    borderRadius: 4,
-    fontSize: 18,
-    textAlign: 'center',
-  },
-  confirmButton: {
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  confirmButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  requestRow: {
-    backgroundColor: 'white',
-    marginVertical: 8,
-    padding: 15,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  requestInfo: {
-    flex: 1,
-  },
-  requestRequester: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#282c34',
-  },
-  requestAmount: {
-    fontSize: 16,
-    color: '#4CAF50',
-    marginVertical: 5,
-  },
-  requestTime: {
-    fontSize: 14,
-    color: '#666',
-  },
-  requestButtons: {
-    flexDirection: 'row',
-  },
-  approveButton: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 4,
-    marginLeft: 10,
-  },
-  denyButton: {
-    backgroundColor: '#f44336',
-    padding: 10,
-    borderRadius: 4,
-    marginLeft: 10,
-  },
-  approveText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  denyText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  emptyText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    marginTop: 20,
-  },
-  loginList: {
-    flex: 1,
-  },
-  loginRow: {
-    backgroundColor: 'white',
-    marginVertical: 8,
-    padding: 15,
-    borderRadius: 8,
-  },
-  loginName: {
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  loginDetail: {
-    color: '#666',
-    fontSize: 14,
-  },
-  list: {
-    flex: 1,
-    marginTop: 60,
-  },
-  row: {
-    backgroundColor: 'white',
-    marginVertical: 8,
-    padding: 15,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  splitSelectedRow: {
-    borderWidth: 2,
-    borderColor: '#FF9800',
-  },
-  disabledRow: {
-    opacity: 0.5,
-    backgroundColor: '#f0f0f0',
-  },
-  cell: {
-    flex: 1,
-  },
-  name: {
-    fontWeight: 'bold',
-    color: '#000000ff',
-    fontSize: 24,
-  },
-  label: {
-    fontWeight: 'bold',
-    color: '#838383ff',
-    fontSize: 15,
-    marginTop: 5,
-  },
-  smallBalance: {
-    marginTop: 6,
-    color: '#444',
-  },
-  actionText: {
-    color: '#61dafb',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  disabledText: {
-    color: '#999',
-  },
-  message: {
-    color: '#61dafb',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 10,
-    padding: 10,
-  },
-  loadingText: {
-    color: 'white',
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  loadingSpinner: {
-    marginTop: 10,
-  },
-  logoutButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 2,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    backgroundColor: '#f44336',
-  },
-  logoutText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  previewRow: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  shareRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    marginVertical: 8,
-    padding: 15,
-    borderRadius: 8,
-  },
-  sliderContainer: {
-    alignItems: 'center',
-    width: 150,
-    marginLeft: 20,
-  },
-  slider: {
-    width: 120,
-    height: 50,
-  },
-  percentLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FF9800',
-    marginTop: 5,
-  },
-  summaryContainer: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  summaryText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#282c34',
-    textAlign: 'center',
-    marginVertical: 2,
-  },
-});
