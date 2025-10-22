@@ -132,7 +132,7 @@ const SplitConfirmScreen = ({
               {item.name} 
             </Text>
             <Text 
-              style={[styles.label, { marginTop: 5, color: '#282c34', fontSize: 16 }]} 
+              style={[styles.label, { marginTop: 5, color: '#b9bec9ff', fontSize: 16 }]} 
               selectable={false}
             >
               Pays: €{item.amount.toFixed(2)}

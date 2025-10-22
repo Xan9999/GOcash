@@ -6,6 +6,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  image: {
+    width: '80%',   //  ensures image scales relative to button
+    height: '80%',
+  },
   container: {
     flex: 1,
     backgroundColor: 'rgba(40, 44, 52, 0.5)',
@@ -28,24 +32,43 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonContainer: {
-    marginVertical: 40,
+    flexDirection: 'row', // Change to row layout
+    justifyContent: 'space-evenly', // Evenly space buttons
+    alignItems: 'center',
+    marginTop: 200, // Move buttons lower
+    width: '100%', // Full width to allow even spacing
   },
   sendButton: {
     backgroundColor: '#61dafb',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
     padding: 15,
     borderRadius: 8,
     marginBottom: 20,
     width: 200,
+    overflow: 'hidden',
   },
   receiveButton: {
     backgroundColor: '#4CAF50',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
     padding: 15,
     borderRadius: 8,
     marginBottom: 20,
     width: 200,
+    overflow: 'hidden',
   },
   splitButton: {
     backgroundColor: '#FF9800',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 15,
     borderRadius: 8,
     width: 200,

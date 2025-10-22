@@ -1,6 +1,6 @@
 // Updated HomeScreen.js to add Transaction History button
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import styles from '../Styles';
 
 const HomeScreen = ({ 
@@ -10,7 +10,8 @@ const HomeScreen = ({
   setCurrentScreen, 
   setIsRequestFlow,
   setSplitSelectedIds,
-  setShares
+  setShares,
+  btnImages
 }) => {
   const hasPending = pendingRequests.length > 0;
   return (
@@ -30,6 +31,7 @@ const HomeScreen = ({
           }}
           activeOpacity={0.7}
         >
+          <Image source={btnImages.send} style={styles.image} resizeMode="contain" />
           <Text style={styles.buttonText}>Send Money</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -40,6 +42,7 @@ const HomeScreen = ({
           }}
           activeOpacity={0.7}
         >
+          <Image source={btnImages.request} style={styles.image} resizeMode="contain"  />
           <Text style={styles.buttonText}>Request Money</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -51,6 +54,7 @@ const HomeScreen = ({
           }}
           activeOpacity={0.7}
         >
+          <Image source={btnImages.split} style={styles.image} resizeMode="contain" />
           <Text style={styles.buttonText}>Split Check</Text>
         </TouchableOpacity>
       </View>
