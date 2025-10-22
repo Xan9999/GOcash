@@ -27,9 +27,6 @@ export const renderUser = (styles, currentUser, isRequestFlow, handleSelectRecip
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.detailLabel}>{item.phone}</Text>
       </View>
-      <Text style={styles.actionText}>
-        {isRequestFlow ? 'Request From' : 'Send To'}
-      </Text>
     </TouchableOpacity>
   );
 };
@@ -63,7 +60,10 @@ export const renderPendingRequest = (styles, onApprove, onDeny) => ({ item }) =>
     <View style={styles.requestRow}>
       <View style={styles.requestInfo}>
         <Text style={styles.requestRequester}>
-          {item.requester_name} requests €{safeAmount}
+          Od: {item.requester_name}   {safeAmount}€ 
+        </Text>
+        <Text style={styles.requestInfo}>
+          Prejet zahtevek za plačilo v znesku
         </Text>
         <Text style={styles.requestTime}>
           {new Date(item.created_at).toLocaleDateString()}
@@ -75,14 +75,14 @@ export const renderPendingRequest = (styles, onApprove, onDeny) => ({ item }) =>
           onPress={() => onApprove(item.id, item.amount * 100)}  // Pass cents back
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Approve</Text>
+          <Text style={styles.buttonText}>Plačaj</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.denyButton, { backgroundColor: '#f44336' }]}
           onPress={() => onDeny(item.id)}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Deny</Text>
+          <Text style={styles.buttonText}>Zavrni</Text>
         </TouchableOpacity>
       </View>
     </View>

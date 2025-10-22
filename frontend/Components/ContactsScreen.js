@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
-import styles from '../Styles';
+import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
+import styles from '../Styles.js';
 import { renderUser } from './Renderers';
 
 const ContactsScreen = ({ 
@@ -27,9 +27,9 @@ const ContactsScreen = ({
         onPress={() => setCurrentScreen('home')}
         activeOpacity={0.7}
       >
-        <Text style={styles.backText}>← Back to Home</Text>
+        <Image source={require('../assets/backarrow.png')} style={styles.icon} />
       </TouchableOpacity>
-      <Text style={styles.title}>Select {isRequestFlow ? 'Payer' : 'Recipient'}</Text>
+      <Text style={styles.title}>{isRequestFlow ? 'Zahtevek za plačilo' : 'Nakaži denar'}</Text>
       <FlatList
         data={filteredUsers} // Use the filtered list
         renderItem={userRenderer}

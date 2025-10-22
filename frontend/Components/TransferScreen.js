@@ -29,7 +29,7 @@ const TransferScreen = ({
       }}
       activeOpacity={0.7}
     >
-      <Text style={styles.backText}>← Back to Contacts</Text>
+      <Text style={styles.backText}>← Nazaj na kontakte</Text>
     </TouchableOpacity>
     <Text style={styles.title}>
       {isRequestFlow ? 
@@ -42,7 +42,7 @@ const TransferScreen = ({
       <Text style={styles.recipientPhone}>{selectedRecipient?.phone}</Text>
     </View>
     <View style={styles.amountContainer}>
-      <Text style={styles.amountdetailLabel}>Amount (€):</Text>
+      <Text style={styles.amountdetailLabel}>Znesek (€):</Text>
       <TextInput
         style={styles.amountInput}
         value={amountInput}
@@ -68,7 +68,7 @@ const TransferScreen = ({
       disabled={loading}
       activeOpacity={0.7}
     >
-      <Text style={styles.confirmButtonText}>{isRequestFlow ? 'Request Money' : 'Confirm Send'}</Text>
+      <Text style={styles.confirmButtonText}>{isRequestFlow ? 'Potrdi' : 'Potrdi'}</Text>
     </TouchableOpacity>
     {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
     {message ? <Text style={styles.message}>{message}</Text> : null}

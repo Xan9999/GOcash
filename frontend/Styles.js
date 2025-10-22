@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#16d125ff',
     textAlign: 'center',
     marginBottom: 20,
     marginTop: Platform.OS === 'web' ? 50 : 80,
@@ -306,10 +306,14 @@ const styles = StyleSheet.create({
     top: Platform.OS === 'web' ? 20 : 50,
     left: 20,
     zIndex: 10,
+
   },
   backButtonPadded: {
     padding: 5,
     borderRadius: 4,
+    width: 40,
+    height: 40,
+    color: '#61dafb', 
   },
   logoutButton: {
     position: 'absolute',
@@ -440,6 +444,7 @@ const styles = StyleSheet.create({
   },
   requestInfo: {
     flex: 2,
+
   },
   requestRequester: {
     fontWeight: 'bold',
