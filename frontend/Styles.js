@@ -47,6 +47,17 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 10,
   },
+  footerContainer: {
+    position: 'absolute',
+    bottom: 40, // lift it slightly above screen edge
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    paddingHorizontal: 0,
+  },
+
   list: {
     flex: 1,
     paddingHorizontal: 10,
@@ -496,12 +507,13 @@ const styles = StyleSheet.create({
   },
   splitSelectTitle: {
     fontSize: 18,
+    color: 'black',
     fontWeight: 'bold',
     color: '#4CAF50',
   },
   splitSelectCount: {
     fontSize: 14,
-    color: '#ccc',
+    color: '#3f3f3fff',
     marginTop: 5,
   },
   rowTextContainer: {

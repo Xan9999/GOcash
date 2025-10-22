@@ -23,19 +23,6 @@ const HomeScreen = ({
         <Text style={styles.buttonText}>Odjava</Text>
       </TouchableOpacity>
       
-      {/* NEW: Chat/Requests Icon (Top Right Corner, positioned relative to the HomeScreen View) */}
-      <TouchableOpacity
-        style={styles.chatIcon} // Positioned absolutely via style
-        onPress={() => setCurrentScreen('requests')}
-        activeOpacity={0.7}
-      >
-        <Image 
-          source={chatIconSource} 
-          style={styles.headerIcon} // New style for icon size and tint
-          resizeMode="contain" 
-        />
-      </TouchableOpacity>
-      
       <Text style={styles.homeTitle}>Flik 2</Text>
 
       <View style={styles.buttonContainer}>
@@ -74,14 +61,26 @@ const HomeScreen = ({
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        style={[styles.historyButton, { marginTop: 10 }]}
-        onPress={() => setCurrentScreen('transactions')}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.historyButtonText}>Transaction History</Text>
-      </TouchableOpacity>
-      {/* Removed the old pending requests button block */}
+      <View style={styles.footerContainer}>
+        <TouchableOpacity onPress={handleLogout}>
+          <Image source={btnImages.logout} style={styles.headerIcon} resizeMode="contain" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => setCurrentScreen('requests')}
+          activeOpacity={0.7}
+        >
+          <Image source={chatIconSource} style={styles.headerIcon} resizeMode="contain" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => setCurrentScreen('transactions')}
+        >
+          <Image source={btnImages.history} style={styles.headerIcon} resizeMode="contain" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
