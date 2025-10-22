@@ -26,7 +26,7 @@ const RequestsScreen = ({
         renderItem={requestRenderer}
         keyExtractor={(item) => item.id.toString()}
         style={styles.list}
-        ListEmptyComponent={<Text style={styles.emptyText}>No pending requests.</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>Ni zahtev.</Text>}
         contentContainerStyle={{ paddingBottom: 50 }}
       />
     </View>
