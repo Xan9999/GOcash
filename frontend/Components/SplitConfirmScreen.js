@@ -120,31 +120,30 @@ const SplitConfirmScreen = ({
         <Text style={styles.buttonText}>Equal Split</Text>
       </TouchableOpacity>
       
-      {/* Total Weight Indicator (REMOVED) */}
-      {/* Share List */}
       {allPeople.map((item) => (
         <View style={styles.personRow} key={item.id.toString()}>
           <View style={styles.cell}>
-            <Text style={[
-              styles.name, 
-              item.isUser && { fontSize: 22, fontWeight: '800' }
-            ]}>
-              {item.name} 
-            </Text>
+            <View>
+              <Text style={[
+                styles.name, 
+                item.isUser && { fontSize: 22, fontWeight: '800' }
+              ]}>
+                {item.name} 
+              </Text>
+            </View>
             <Text 
-              style={styles.detailLabel}
+              style={styles.amountdetailLabelRight}
               selectable={false}
             >
               Pays: €{item.amount.toFixed(2)}
             </Text>
-            {/* Percentage/Weight Indicator (REMOVED) */}
+
           </View>
           <View style={styles.sliderContainer}>
             <SliderComponent
               style={styles.slider}
               minimumValue={0}
               maximumValue={100}
-              // Bind value to the raw WEIGHT state
               value={item.weight}
               onValueChange={(value) => 
                 item.isUser 
