@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Slider from '@react-native-community/slider';
 import {
   View,
   Text,
@@ -11,11 +10,14 @@ import {
   Modal,
   Platform,
   TextInput,
-  ImageBackground
+  ImageBackground,
+  ScrollView,  // Add this import
+  Slider  // Ensure this is imported from '@react-native-community/slider'
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import SliderComponent from '@react-native-community/slider';  // Rename to avoid conflict if needed
 
 export default function App() {
   const [users, setUsers] = useState([]);
@@ -34,6 +36,7 @@ export default function App() {
   const [splitSelectedIds, setSplitSelectedIds] = useState([]); // array of user ids selected
   const [splitAmountInput, setSplitAmountInput] = useState('30'); // total bill in euros
   const [shares, setShares] = useState([]);  // Array of % (0-100) for each selected user, index matches splitSelectedIds
+  const [userSharePercent, setUserSharePercent] = useState(100);
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
@@ -277,13 +280,22 @@ export default function App() {
       return;
     }
     const numOthers = splitSelectedIds.length;
-    const equalPercent = 100 / numOthers;  // e.g., 33.33 for 3 people
-    setShares(Array(numOthers).fill(equalPercent));  // Init equal %
+    const equalPercent = 100 / (numOthers + 1);  // Include user for equal
+    setShares(Array(numOthers).fill(equalPercent));
+    setUserSharePercent(equalPercent);  // User also equal
     setSplitAmountInput('30');
     setCurrentScreen('split_confirm');
     setMessage('');
   };
+  const handleUserShareChange = (newPercent) => {
+    setUserSharePercent(Math.max(0, Math.min(100, newPercent)));
+  };
 
+  const handleOtherShareChange = (index, newPercent) => {
+    const newShares = [...shares];
+    newShares[index] = Math.max(0, Math.min(100, newPercent));
+    setShares(newShares);
+  };
   const handleShareChange = (index, newPercent) => {
     const newShares = [...shares];
     newShares[index] = Math.max(0, Math.min(100, newPercent));
@@ -297,18 +309,22 @@ export default function App() {
 
   const equalizeShares = () => {
     if (shares.length === 0) return;
-    const equalPercent = 100 / shares.length;
+    const numTotal = shares.length + 1;  // + user
+    const equalPercent = 100 / numTotal;
     setShares(Array(shares.length).fill(equalPercent));
+    setUserSharePercent(equalPercent);
   };
 
   const memoizedAmounts = useMemo(() => {
     const total = parseFloat(splitAmountInput) || 0;
-    return splitSelectedIds.map((id, idx) => {
+    const userAmount = (userSharePercent / 100) * total;
+    const otherAmounts = splitSelectedIds.map((id, idx) => {
       const percent = shares[idx] || 0;
-      return ((percent / 100) * total);
+      return (percent / 100) * total;
     });
-  }, [splitSelectedIds, shares, splitAmountInput]);  // Only re-run if these change
-
+    return { user: userAmount, others: otherAmounts };
+  }, [splitSelectedIds, shares, splitAmountInput, userSharePercent]);
+  
   // Trigger split request creation
   const handleConfirmSplit = async () => {
     if (!currentUser) {
@@ -321,14 +337,19 @@ export default function App() {
       return;
     }
 
-    // Normalize shares to sum=100 if not exact (scale proportionally)
-    const totalPercent = shares.reduce((sum, p) => sum + p, 0);
-    const normalizedShares = shares.map(p => (p / totalPercent) * 100);  // Now sums to 100
+    // Normalize all shares (user + others) to 100%
+    const allPercents = [userSharePercent, ...shares];
+    const totalPercent = allPercents.reduce((sum, p) => sum + p, 0);
+    const normalizedAll = allPercents.map(p => totalPercent > 0 ? (p / totalPercent) * 100 : 0);
 
-    // Convert to cents amounts
+    // User share (first) - but since payer, their % is for net calc
+    const userNorm = normalizedAll[0];
+    const othersNorm = normalizedAll.slice(1);
+
+    // Amounts for others only (requests to them)
     const total_cents = Math.round(total * 100);
     const recipients = splitSelectedIds.map((uid, idx) => {
-      const percent = normalizedShares[idx];
+      const percent = othersNorm[idx];
       const amount_cents = Math.round((percent / 100) * total_cents);
       return { user_id: uid, amount_cents };
     });
@@ -360,6 +381,7 @@ export default function App() {
       // Reset
       setSplitSelectedIds([]);
       setShares([]);
+      setUserSharePercent(100);
       setSplitAmountInput('30');
       setCurrentScreen('home');
       fetchPendingRequests();
@@ -578,6 +600,7 @@ export default function App() {
       <FlatList
         data={users}
         renderItem={renderUser}
+        keyboardShouldPersistTaps="always"
         keyExtractor={(item) => item.id.toString()}
         refreshing={refreshing}
         onRefresh={() => {
@@ -596,8 +619,9 @@ export default function App() {
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => {
-          setSplitSelectedIds([]);  // Clear on back
-          setShares([]);  // Reset shares
+          setSplitSelectedIds([]);
+          setShares([]);
+          setUserSharePercent(100);
           setCurrentScreen('home');
         }}
       >
@@ -640,42 +664,38 @@ export default function App() {
     }
 
     const total = parseFloat(splitAmountInput) || 0;
-    const totalPercent = shares.reduce((sum, p) => sum + p, 0);
+    const totalPercent = userSharePercent + shares.reduce((sum, p) => sum + p, 0);
     const isExact = Math.abs(totalPercent - 100) < 0.01;
 
-    // Use memoized amounts for live € without re-renders
     const selectedUsersWithAmounts = useMemo(() => 
       splitSelectedIds.map((id, idx) => ({
         ...users.find(u => u.id === id),
         isUser: false,
         percent: shares[idx] || 0,
-        amount: memoizedAmounts[idx] || 0
+        amount: memoizedAmounts.others[idx] || 0
       })).filter(Boolean),
-    [splitSelectedIds, users, memoizedAmounts, shares]);
+    [splitSelectedIds, users, memoizedAmounts.others, shares]);
 
     const totalOwed = selectedUsersWithAmounts.reduce((sum, u) => sum + u.amount, 0);
-    const yourNet = total - totalOwed;
+    const yourNet = memoizedAmounts.user - totalOwed;
 
     const allPeople = useMemo(() => [
       { 
         name: currentUser.name, 
         isUser: true, 
-        percent: 100, 
-        amount: total,
+        percent: userSharePercent, 
+        amount: memoizedAmounts.user,
         net: yourNet
       },
       ...selectedUsersWithAmounts
-    ], [currentUser.name, total, yourNet, selectedUsersWithAmounts]);
-
-    // Fixed height for getItemLayout (prevents jumpy re-renders)
-    const getItemLayout = (data, index) => ({
-      length: 120,  // Approx row height (adjust if needed)
-      offset: 120 * index,
-      index,
-    });
+    ], [currentUser.name, userSharePercent, memoizedAmounts.user, yourNet, selectedUsersWithAmounts]);
 
     return (
-      <View style={styles.container}>
+      <ScrollView 
+        style={styles.container} 
+        keyboardShouldPersistTaps="always" 
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => setCurrentScreen('split')}
@@ -685,7 +705,7 @@ export default function App() {
         <Text style={styles.title}>Confirm Split</Text>
         <Text style={styles.subtitle}>Enter total bill and adjust shares</Text>
 
-        {/* Total Input - Stable typing */}
+        {/* Total Input - Now in ScrollView for stability */}
         <View style={styles.amountContainer}>
           <Text style={styles.amountLabel}>Total Bill (€):</Text>
           <TextInput
@@ -695,10 +715,12 @@ export default function App() {
             keyboardType="decimal-pad"
             placeholder="30.00"
             placeholderTextColor="#999"
-            selectTextOnFocus={false}  // No auto-highlight on focus
-            contextMenuHidden={true}   // No menu/focus steal
+            selectTextOnFocus={false}
+            contextMenuHidden={true}
+            blurOnSubmit={false}
+            keyboardShouldPersistTaps="always"
             autoFocus={true}
-            blurOnSubmit={false}       // Keep focus after enter
+            returnKeyType="done"
           />
         </View>
 
@@ -711,16 +733,13 @@ export default function App() {
           <Text style={styles.buttonText}>Equal Split</Text>
         </TouchableOpacity>
 
-        {/* Optimized FlatList - No flicker, live € */}
+        {/* FlatList */}
         <Text style={[styles.subtitle, { marginTop: 10, marginBottom: 10 }]}>Share Preview:</Text>
         <FlatList
           data={allPeople}
           keyExtractor={(item, index) => (item.id || index).toString()}
-          getItemLayout={getItemLayout}              // Fixed layout, no jumps
-          initialNumToRender={allPeople.length}      // Render all at once
-          maxToRenderPerBatch={allPeople.length}     // Batch all
-          windowSize={10}                            // Small window for perf
-          removeClippedSubviews={false}              // No clipping flicker
+          extraData={shares}
+          keyboardShouldPersistTaps="always"
           renderItem={({ item, index }) => (
             <View style={styles.shareRow}>
               <View style={styles.cell}>
@@ -728,34 +747,42 @@ export default function App() {
                   styles.name, 
                   item.isUser && { fontSize: 26, fontWeight: '800' }
                 ]}>
-                  {item.name}
+                  {item.name} {item.isUser ? '(You)' : ''}
                 </Text>
                 <Text 
                   style={[styles.label, { marginTop: 5 }]} 
-                  selectable={false}  // Explicit no-focus/select
+                  selectable={false}
                 >
                   {item.isUser 
-                    ? `Net Receive: €${item.net.toFixed(2)}` 
+                    ? `Your share: €${item.amount.toFixed(2)} | Net: €${item.net.toFixed(2)}` 
                     : `Pays €${item.amount.toFixed(2)}`
                   }
                 </Text>
               </View>
-              {!item.isUser && (
-                <View style={styles.sliderContainer}>
-                  <Slider
-                    style={styles.slider}
-                    minimumValue={0}
-                    maximumValue={100}
-                    value={item.percent}
-                    onValueChange={(value) => handleShareChange(index - 1, value)}  // Live during drag
-                    minimumTrackTintColor="#FF9800"
-                    maximumTrackTintColor="#ddd"
-                    thumbTintColor="#FF9800"
-                    step={1}
-                    tapOffset={10}  // Precise touch without interference
-                  />
-                </View>
-              )}
+              <View style={styles.sliderContainer}>
+                <SliderComponent  // Use renamed import if conflict
+                  style={styles.slider}
+                  minimumValue={0}
+                  maximumValue={100}
+                  value={item.percent}
+                  onValueChange={(value) => 
+                    item.isUser 
+                      ? handleUserShareChange(value)
+                      : handleOtherShareChange(index - 1, value)
+                  }
+                  minimumTrackTintColor="#FF9800"
+                  maximumTrackTintColor="#ddd"
+                  thumbTintColor="#FF9800"
+                  step={1}
+                  tapOffset={10}
+                  debug={false}
+                  // Add for better drag on mobile
+                  trackStyle={{ height: 4 }}
+                  thumbStyle={{ width: 20, height: 20 }}
+                  minimumTrackStyle={{}}
+                  maximumTrackStyle={{}}
+                />
+              </View>
             </View>
           )}
           style={{ flex: 1 }}
@@ -774,13 +801,16 @@ export default function App() {
         </TouchableOpacity>
         {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
         {message ? <Text style={styles.message}>{message}</Text> : null}
-      </View>
+      </ScrollView>
     );
   };
-
   // Transfer/Request Screen
   const TransferScreen = () => (
-    <View style={styles.container}>
+    <ScrollView 
+      style={styles.container} 
+      keyboardShouldPersistTaps="always" 
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => {
@@ -801,13 +831,16 @@ export default function App() {
           style={styles.amountInput}
           value={amountInput}
           onChangeText={setAmountInput}
-          keyboardType="numeric"
+          keyboardType="decimal-pad"
           placeholder="10"
           placeholderTextColor="#999"
+          selectTextOnFocus={false}
+          contextMenuHidden={true}
+          blurOnSubmit={false}
+          keyboardShouldPersistTaps="always"
           autoFocus={true}
           returnKeyType="done"
           onSubmitEditing={handleConfirmTransfer}
-          blurOnSubmit={false}
         />
       </View>
       <TouchableOpacity
@@ -823,9 +856,8 @@ export default function App() {
       </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
       {message ? <Text style={styles.message}>{message}</Text> : null}
-    </View>
+    </ScrollView>
   );
-
   // Requests Screen
   const RequestsScreen = () => (
     <View style={styles.container}>
@@ -1192,7 +1224,7 @@ const styles = StyleSheet.create({
   },
   slider: {
     width: 120,
-    height: 40,
+    height: 50,
   },
   percentLabel: {
     fontSize: 14,
