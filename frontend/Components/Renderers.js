@@ -26,8 +26,6 @@ export const renderUser = (styles, currentUser, isRequestFlow, handleSelectRecip
       <View style={styles.cell}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.label}>{item.phone}</Text>
-        {/* Assumes backend now correctly supplies 'balance' (a float/number) */}
-        <Text style={styles.contactBalance}>Balance: €{item.balance.toFixed(2)}</Text>
       </View>
       <Text style={styles.actionText}>
         {isRequestFlow ? 'Request From' : 'Send To'}
