@@ -10,7 +10,8 @@ const ContactsScreen = ({
   handleSelectRecipient, 
   setCurrentScreen,
   refreshing,
-  fetchUsers
+  fetchUsers,
+  btnImages
 }) => {
   // Filter out the current user (self) from the list
   const filteredUsers = useMemo(() => {
@@ -30,7 +31,17 @@ const ContactsScreen = ({
         <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
       <Text style={styles.title}>{isRequestFlow ? 'Zahtevek za plačilo' : 'Nakaži denar'}</Text>
-      <FlatList
+      {isRequestFlow && (
+        <TouchableOpacity
+          style={
+            styles.topRightButton
+            }
+          onPress={() => setCurrentScreen('receive_qr')}
+          activeOpacity={0.7}
+        >
+          <Image source={btnImages.qr} style={styles.headerIcon} /> 
+        </TouchableOpacity>
+      )}      <FlatList
         data={filteredUsers} // Use the filtered list
         renderItem={userRenderer}
         keyboardShouldPersistTaps="always"
