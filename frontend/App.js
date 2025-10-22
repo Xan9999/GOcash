@@ -23,7 +23,8 @@ import SplitSelectionScreen from './Components/SplitSelectionScreen';
 import TransferScreen from './Components/TransferScreen';
 import RequestsScreen from './Components/RequestsScreen';
 import SplitConfirmScreen from './Components/SplitConfirmScreen';
-import GroupCreationScreen from './Components/GroupCreationScreen'; // NEW
+import GroupCreationScreen from './Components/GroupCreationScreen'; 
+import ReceiveQrScreen from './Components/ReceiveQrScreen'; // NEW
 import { renderLoginUser } from './Components/Renderers';
 import TransactionScreen from './Components/TransactionScreen';
 
@@ -36,6 +37,8 @@ const btnImages = {
   chatUnread: require('./assets/chat-unread.png'),
   history: require('./assets/history.png'),
   logout: require('./assets/logout.png'),
+  scan: require('./assets/qr-code.png'),
+  qr: require('./assets/qr-code.png'),
 };
 
   export default function App() {
@@ -45,7 +48,8 @@ const btnImages = {
   const [refreshing, setRefreshing] = useState(false);
   const [showLogin, setShowLogin] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'contacts', 'transfer', 'requests', 'split', 'split_confirm', 'group_create'
+  // Updated comment: 'receive_qr' added
+  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'contacts', 'transfer', 'requests', 'split', 'split_confirm', 'group_create', 'receive_qr'
   const [selectedRecipient, setSelectedRecipient] = useState(null); // For transfer/request
   const [isRequestFlow, setIsRequestFlow] = useState(false); // Send vs Request mode
   const [pendingRequests, setPendingRequests] = useState([]); // For requests screen
@@ -728,6 +732,7 @@ const btnImages = {
             setCurrentScreen={setCurrentScreen}
             refreshing={refreshing}
             fetchUsers={fetchUsers}
+            btnImages={btnImages} // NEW PROP
           />
         )}
         {!showLogin && currentScreen === 'transfer' && (
@@ -808,6 +813,14 @@ const btnImages = {
             handleCreateGroup={handleCreateGroup}
             setCurrentScreen={setCurrentScreen}
             loading={loading}
+          />
+        )}
+
+        {!showLogin && currentScreen === 'receive_qr' && (
+          <ReceiveQrScreen
+            amountInput={amountInput} // Pass global amount for initial value
+            currentUser={currentUser}
+            setCurrentScreen={setCurrentScreen}
           />
         )}
 

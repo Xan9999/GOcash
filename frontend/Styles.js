@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     color: 'green',
     textAlign: 'center',
     marginBottom: 20,
-    marginTop: Platform.OS === 'web' ? 50 : 80,
+    marginTop: 80,
   },
   homeTitle: {
     fontSize: 60,
@@ -361,18 +361,17 @@ const styles = StyleSheet.create({
   // MARK: Positional/Utility
   backButton: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 20 : 50,
+    top: 50,
     left: 20,
     zIndex: 10,
 
   },
 
-  logoutButton: {
+  topRightButton: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 20 : 50,
+    top: 50,
     right: 20,
     padding: 10,
-    zIndex: 10,
   },
   confirmButtonDisabled: {
     opacity: 0.5,
