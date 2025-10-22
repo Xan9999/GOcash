@@ -85,7 +85,7 @@ const GroupCreationScreen = ({
           disabled={loading || splitSelectedIds.length === 0 || !groupName.trim()}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Razdeli račun in ustvari skupino</Text>
+          <Text style={styles.buttonText}>Razdeli račun</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -94,7 +94,7 @@ const GroupCreationScreen = ({
           disabled={loading || splitSelectedIds.length === 0 || !groupName.trim()}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Shrani skupino</Text>
+          <Text style={styles.buttonText}>Shrani</Text>
         </TouchableOpacity>
       </View>
       

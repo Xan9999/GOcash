@@ -17,7 +17,20 @@ const HomeScreen = ({
   const chatIconSource = hasPending ? btnImages.chatUnread : btnImages.chat;
 
   return (
-    <View style={styles.centeredContainer}>      
+    <View style={styles.centeredContainer}>
+      {/* QR Scan Button - Top Right */}
+      <TouchableOpacity
+        style={styles.topRightButton}
+        onPress={() => console.log('Scan QR button pressed - does nothing yet')}
+        activeOpacity={0.7}
+      >
+        <Image
+          source={btnImages.scan}
+          style={styles.headerIcon}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+
       <Text style={styles.homeTitle}>Flik 2</Text>
 
       <View style={styles.buttonContainer}>
@@ -54,15 +67,6 @@ const HomeScreen = ({
         >
           <Image source={btnImages.split} style={styles.icon} resizeMode="contain" />
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.circleButton]}
-          onPress={() => console.log('Scan QR button pressed - does nothing yet')}
-          activeOpacity={0.7}
-        >
-          <Image source={btnImages.scan} style={styles.icon} resizeMode="contain" />
-        </TouchableOpacity>
-        {/* END NEW */}
       </View>
 
       <View style={styles.footerContainer}>

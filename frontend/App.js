@@ -37,7 +37,7 @@ const btnImages = {
   chatUnread: require('./assets/chat-unread.png'),
   history: require('./assets/history.png'),
   logout: require('./assets/logout.png'),
-  scan: require('./assets/qr-code.png'),
+  scan: require('./assets/camera.png'),
   qr: require('./assets/qr-code.png'),
 };
 
