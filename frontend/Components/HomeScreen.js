@@ -1,3 +1,4 @@
+// Updated HomeScreen.js to add Transaction History button
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import styles from '../Styles';
@@ -53,6 +54,13 @@ const HomeScreen = ({
           <Text style={styles.buttonText}>Split Check</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity
+        style={[styles.historyButton, { marginTop: 10 }]}
+        onPress={() => setCurrentScreen('transactions')}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.buttonText}>Transaction History</Text>
+      </TouchableOpacity>
       {hasPending && (
         <TouchableOpacity
           style={styles.pendingButton}

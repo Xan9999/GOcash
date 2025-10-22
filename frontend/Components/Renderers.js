@@ -53,27 +53,38 @@ export const renderSplitUser = (styles, toggleSplitSelect, splitSelectedIds) => 
   );
 };
 
-// Renderer for the Requests screen
-export const renderPendingRequest = (styles, handleApproveRequest, handleDenyRequest) => ({ item }) => (
-  <View style={styles.requestRow}>
-    <View style={styles.requestInfo}>
-      <Text style={styles.requestRequester}>{item.requester_name}</Text>
-      <Text style={styles.requestAmount}>€{(item.amount_cents/100).toFixed(2)}</Text>
-      <Text style={styles.requestTime}>{item.created_at}</Text>
+
+// In Renderers.js - export const renderPendingRequest = (styles, onApprove, onDeny) => ({ item }) => (
+export const renderPendingRequest = (styles, onApprove, onDeny) => ({ item }) => {
+  // Safe amount formatting: Convert to number, default to 0, then format
+  const safeAmount = Number(item.amount || 0).toFixed(2);
+  
+  return (
+    <View style={styles.requestRow}>
+      <View style={styles.requestInfo}>
+        <Text style={styles.requestRequester}>
+          {item.requester_name} requests €{safeAmount}
+        </Text>
+        <Text style={styles.requestTime}>
+          {new Date(item.created_at).toLocaleDateString()}
+        </Text>
+      </View>
+      <View style={styles.requestActions}>
+        <TouchableOpacity
+          style={[styles.approveButton, { backgroundColor: '#4CAF50' }]}
+          onPress={() => onApprove(item.id, item.amount * 100)}  // Pass cents back
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>Approve</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.denyButton, { backgroundColor: '#f44336' }]}
+          onPress={() => onDeny(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>Deny</Text>
+        </TouchableOpacity>
+      </View>
     </View>
-    <View style={styles.requestButtons}>
-      <TouchableOpacity
-        style={styles.approveButton}
-        onPress={() => handleApproveRequest(item.id, item.amount_cents, item.requester_name)}
-      >
-        <Text style={styles.approveText}>Approve</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.denyButton}
-        onPress={() => handleDenyRequest(item.id, item.requester_name)}
-      >
-        <Text style={styles.denyText}>Deny</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-);
+  );
+};
