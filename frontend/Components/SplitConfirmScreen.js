@@ -94,7 +94,7 @@ const SplitConfirmScreen = ({
       
       {/* Total Input */}
       <View style={styles.amountContainer}>
-        <Text style={styles.amountLabel}>Total Bill (€):</Text>
+        <Text style={styles.amountdetailLabel}>Total Bill (€):</Text>
         <TextInput
           style={styles.amountInput}
           value={splitAmountInput}
@@ -113,7 +113,7 @@ const SplitConfirmScreen = ({
 
       {/* Equalize Button */}
       <TouchableOpacity
-        style={[styles.sendButton, { width: '100%', alignSelf: 'center', marginBottom: 20, marginTop: 10 }]}
+        style={[styles.confirmButton, { width: '100%', alignSelf: 'center', marginBottom: 20, marginTop: 10 }]}
         onPress={equalizeShares}
         activeOpacity={0.7}
       >
@@ -123,7 +123,7 @@ const SplitConfirmScreen = ({
       {/* Total Weight Indicator (REMOVED) */}
       {/* Share List */}
       {allPeople.map((item) => (
-        <View style={styles.shareRow} key={item.id.toString()}>
+        <View style={styles.personRow} key={item.id.toString()}>
           <View style={styles.cell}>
             <Text style={[
               styles.name, 
@@ -132,7 +132,7 @@ const SplitConfirmScreen = ({
               {item.name} 
             </Text>
             <Text 
-              style={[styles.label, { marginTop: 5, color: '#b9bec9ff', fontSize: 16 }]} 
+              style={styles.detailLabel}
               selectable={false}
             >
               Pays: €{item.amount.toFixed(2)}

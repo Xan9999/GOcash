@@ -42,7 +42,7 @@ const TransferScreen = ({
       <Text style={styles.recipientPhone}>{selectedRecipient?.phone}</Text>
     </View>
     <View style={styles.amountContainer}>
-      <Text style={styles.amountLabel}>Amount (€):</Text>
+      <Text style={styles.amountdetailLabel}>Amount (€):</Text>
       <TextInput
         style={styles.amountInput}
         value={amountInput}

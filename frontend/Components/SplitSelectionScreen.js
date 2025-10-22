@@ -44,7 +44,7 @@ const SplitSelectionScreen = ({
           <View style={styles.userInfo}>
             {/* Use groupRowText style for clearer group differentiation */}
             <Text style={styles.groupRowText}>{item.name}</Text>
-            <Text style={styles.label}>{memberNames}</Text>
+            <Text style={styles.detailLabel}>{memberNames}</Text>
           </View>
           {/* Action text removed as requested */}
         </TouchableOpacity>
@@ -63,7 +63,7 @@ const SplitSelectionScreen = ({
         >
           <View style={styles.userInfo}>
             <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.label}>{item.email}</Text>
+            <Text style={styles.detailLabel}>{item.email}</Text>
           </View>
           {/* Action text removed as requested */}
         </TouchableOpacity>
@@ -112,7 +112,7 @@ const SplitSelectionScreen = ({
           style={[
             styles.confirmButton, 
             splitSelectedIds.length === 0 && styles.confirmButtonDisabled,
-            styles.splitConfirmButton
+            styles.confirmButton
           ]}
           onPress={() => handleConfirmSelection(splitSelectedIds)}
           disabled={splitSelectedIds.length === 0}

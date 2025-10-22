@@ -51,8 +51,8 @@ const GroupCreationScreen = ({
       
       {/* Group Name Input */}
       <View style={styles.inputContainer}>
-        {/* Use the new, more visible groupLabel style */}
-        <Text style={styles.groupLabel}>Group Name:</Text>
+        {/* Use the new, more visible groupdetailLabel style */}
+        <Text style={styles.groupdetailLabel}>Group Name:</Text>
         <TextInput
           style={styles.textInput}
           placeholder="e.g., Dinner Crew, Gym Buddies"
@@ -65,14 +65,14 @@ const GroupCreationScreen = ({
 
       {/* Selected Members Display */}
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Members Selected (Excluding You):</Text>
+        <Text style={styles.detailLabel}>Members Selected (Excluding You):</Text>
         <Text style={styles.textInputDisplay}>
           {selectedMemberNames || 'No members selected.'}
         </Text>
-        <Text style={[styles.label, { marginTop: 10 }]}>
+        <Text style={[styles.detailLabel, { marginTop: 10 }]}>
           {currentUser?.name} (You) is automatically included in the split.
         </Text>
-        <Text style={[styles.label, { color: 'red' }]}>
+        <Text style={[styles.detailLabel, { color: 'red' }]}>
           {splitSelectedIds.length === 0 && "Please go back and select members."}
         </Text>
       </View>
@@ -80,7 +80,7 @@ const GroupCreationScreen = ({
       {/* Action Buttons */}
       <View style={styles.groupCreateActions}>
         <TouchableOpacity
-          style={[styles.sendButton, { backgroundColor: '#4CAF50', flex: 2 }]}
+          style={[styles.confirmButton, { backgroundColor: '#4CAF50', flex: 2 }]}
           onPress={() => handleCreate(true)}
           disabled={loading || splitSelectedIds.length === 0 || !groupName.trim()}
           activeOpacity={0.7}
@@ -89,7 +89,7 @@ const GroupCreationScreen = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.sendButton, { backgroundColor: '#61dafb', flex: 1, marginLeft: 10 }]}
+          style={[styles.confirmButton, { backgroundColor: '#61dafb', flex: 1, marginLeft: 10 }]}
           onPress={() => handleCreate(false)}
           disabled={loading || splitSelectedIds.length === 0 || !groupName.trim()}
           activeOpacity={0.7}

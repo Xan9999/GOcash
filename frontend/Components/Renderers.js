@@ -25,7 +25,7 @@ export const renderUser = (styles, currentUser, isRequestFlow, handleSelectRecip
     >
       <View style={styles.cell}>
         <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.label}>{item.phone}</Text>
+        <Text style={styles.detailLabel}>{item.phone}</Text>
       </View>
       <Text style={styles.actionText}>
         {isRequestFlow ? 'Request From' : 'Send To'}
@@ -46,7 +46,7 @@ export const renderSplitUser = (styles, toggleSplitSelect, splitSelectedIds) => 
     >
       <View style={styles.cell}>
         <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.label}>{item.email}</Text>
+        <Text style={styles.detailLabel}>{item.email}</Text>
       </View>
       {/* NO ACTION TEXT on Split Selection screen as requested */}
     </TouchableOpacity>
