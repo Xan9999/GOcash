@@ -127,7 +127,7 @@ const TransactionItem = ({ item }) => (
         </Text>
       ) : null}
       <Text style={styles.transactionDate}>
-        {new Date(item.timestamp).toLocaleString()}
+        {new Date(item.timestamp + "Z").toLocaleString('sl-SI', {timeZone: 'Europe/Ljubljana'})}
       </Text>
     </View>
     <View style={styles.transactionAmountContainer}>

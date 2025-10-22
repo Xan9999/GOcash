@@ -14,10 +14,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(40, 44, 52, 0.5)',
   },
-  loginContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(40, 44, 52, 0.5)',
-  },
   homeContainer: {
     flex: 1,
     backgroundColor: 'rgba(40, 44, 52, 0.5)',

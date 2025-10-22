@@ -54,3 +54,5 @@ backend\venv
 
 ----database----
 backend\payments.db
+backend/venv/pyvenv.cfg
+backend/payments.db
