@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(223, 255, 223, 0.9)',
+    backgroundColor: 'rgba(234, 255, 234, 0.9)',
   },
   darkContainer: {
     flex: 1,
@@ -408,12 +408,22 @@ const styles = StyleSheet.create({
     height: '80%',
   },
   icon: {
-    width: 60,
-    height: 60,
+    width: 40,
+    height: 40,
+    tintColor: 'rgba(234, 255, 234, 0.9)',
   },
-  rotatedIcon: {
-    transform: [{ rotate: '180deg' }],
+  chatIcon: {
+    position: 'absolute',
+    top: 50, // Adjust based on your header/status bar
+    right: 20,
+    zIndex: 10, // Ensure it's above other elements
   },
+  headerIcon: {
+    width: 30, // Smaller than circle button icons
+    height: 30,
+    tintColor: '#006400', // DarkGreen to match the Flik 2 title
+  },
+
   loadingSpinner: {
     marginTop: 10,
   },

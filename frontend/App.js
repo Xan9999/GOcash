@@ -31,7 +31,10 @@ import TransactionScreen from './Components/TransactionScreen';
 const btnImages = {
   send: require('./assets/moneyout.png'),
   request: require('./assets/moneyin.png'),
-  split: require('./assets/split.png'),
+  split: require('./assets/group.png'),
+  chat: require('./assets/chat.png'),
+  chatUnread: require('./assets/chat-unread.png'),
+
 };
 
   export default function App() {
