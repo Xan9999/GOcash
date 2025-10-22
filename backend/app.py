@@ -4,6 +4,7 @@ import sqlite3
 import requests
 from datetime import datetime
 import os
+import json # Import json for handling JSON strings
 
 app = Flask(__name__)
 CORS(app)
@@ -15,6 +16,41 @@ DB_PATH = 'payments.db'
 
 def db_connect():
     return sqlite3.connect(DB_PATH)
+
+# Utility function to send push notifications
+def send_push(token, title, body):
+    if not token:
+        print("No push token available for user.")
+        return
+
+    message = {
+        'to': token,
+        'title': title,
+        'body': body,
+        '_displayInForeground': True,
+    }
+
+    try:
+        response = requests.post(
+            EXPO_PUSH_URL,
+            json=message,
+            headers={'Accept': 'application/json', 'Accept-Encoding': 'gzip, deflate', 'Content-Type': 'application/json'},
+            timeout=5
+        )
+        response.raise_for_status()
+        print(f"Push notification sent successfully to {token}. Status: {response.status_code}")
+        # print("Response body:", response.json()) # Verbose logging removed
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending push notification: {e}")
+
+# Utility to get push token
+def get_user_token(user_id):
+    conn = db_connect()
+    cursor = conn.cursor()
+    cursor.execute('SELECT push_token FROM push_tokens WHERE user_id = ?', (user_id,))
+    token = cursor.fetchone()
+    conn.close()
+    return token[0] if token else None
 
 # Initialize SQLite DB with sample data and handle migration to integer-cents
 def init_db():
@@ -58,153 +94,150 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pending_requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            requester_id INTEGER,
-            payer_id INTEGER,
-            amount_cents INTEGER,
-            status TEXT DEFAULT 'pending',
-            created_at TEXT,
+            requester_id INTEGER NOT NULL,
+            payer_id INTEGER NOT NULL,
+            amount_cents INTEGER NOT NULL,
+            status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'denied'
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (requester_id) REFERENCES users (id),
             FOREIGN KEY (payer_id) REFERENCES users (id)
         )
     ''')
+    
+    # --- NEW: Groups Table ---
+    # Members will be stored as a JSON array of user IDs
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS groups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            creator_id INTEGER NOT NULL,
+            member_ids TEXT NOT NULL, -- Stored as JSON string: [id1, id2, ...]
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (creator_id) REFERENCES users (id)
+        )
+    ''')
 
-    # Seed sample users if empty
+    # Seed data if DB is new
+    if first_time:
+        print("Seeding new database...")
+        needs_seed = True
+        
+    # Check if we need to seed users (robust way)
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
         needs_seed = True
-        sample_users = [
-            ('Alice Johnson', 'alice@example.com', '+1-555-0101', 'ALICE1234567890'),
-            ('Bob Smith', 'bob@example.com', '+1-555-0102', 'BOB1234567891'),
-            ('Carol Davis', 'carol@example.com', '+1-555-0103', 'CAROL1234567892'),
-            ('David Wilson', 'david@example.com', '+1-555-0104', 'DAVID1234567893'),
-            ('Eve Brown', 'eve@example.com', '+1-555-0105', 'EVE1234567894')
+
+    if needs_seed:
+        users = [
+            ("Alice Johnson", "alice@example.com", "123-456-7890", "DE123456780001"),
+            ("Bob Smith", "bob@example.com", "123-456-7891", "DE123456780002"),
+            ("Charlie Brown", "charlie@example.com", "123-456-7892", "DE123456780003"),
+            ("David Lee", "david@example.com", "123-456-7893", "DE123456780004"),
         ]
-        cursor.executemany('INSERT INTO users (name, email, phone, iban) VALUES (?, ?, ?, ?)', sample_users)
-        for _, _, _, iban in sample_users:
-            cursor.execute('INSERT OR IGNORE INTO bank_balances (iban, balance_cents) VALUES (?, 0)', (iban,))
+        
+        for name, email, phone, iban in users:
+            cursor.execute('''
+                INSERT INTO users (name, email, phone, iban) VALUES (?, ?, ?, ?)
+            ''', (name, email, phone, iban))
+            
+            # Initial balance 100 EUR = 10000 cents
+            cursor.execute('''
+                INSERT INTO bank_balances (iban, balance_cents) VALUES (?, ?)
+            ''', (iban, 10000))
 
-    # Migration: if there are any rows in bank_balances with non-integer values (previous float), try converting
-    # (sqlite is dynamic typed so we attempt to SELECT and detect decimals)
-    cursor.execute("SELECT iban, balance_cents FROM bank_balances")
-    all_balances = cursor.fetchall()
-    for iban, bal in all_balances:
-        # if value is stored as float-like string with decimal, convert by multiplying by 100
-        try:
-            # attempt to coerce to float then to int cents
-            f = float(bal)
-            # If it's not already an integer number of cents, update
-            cents = int(round(f * 100))
-            cursor.execute('UPDATE bank_balances SET balance_cents = ? WHERE iban = ?', (cents, iban))
-        except Exception:
-            # ignore if conversion fails
-            pass
+        # Seed a split request for testing (Alice owes Bob 5.00)
+        # Assuming Alice is user 1, Bob is user 2
+        cursor.execute('''
+            INSERT INTO pending_requests (requester_id, payer_id, amount_cents, status) 
+            VALUES (?, ?, ?, ?)
+        ''', (2, 1, 500, 'pending'))
+        
+        # --- NEW: Seed a Group ---
+        # Assuming users 1 (Alice) and 2 (Bob) and 3 (Charlie) exist
+        # Alice creates a group "Dinner Crew" with Bob and Charlie (IDs 2 and 3). Creator is 1.
+        member_ids = json.dumps([2, 3]) # Storing as a JSON array string
+        cursor.execute('''
+            INSERT INTO groups (name, creator_id, member_ids) 
+            VALUES (?, ?, ?)
+        ''', ("Dinner Crew", 1, member_ids))
+        
+        conn.commit()
 
-    conn.commit()
     conn.close()
 
+# Ensure DB is initialized
 init_db()
 
-def send_push(to_token, title, body):
-    if not to_token:
-        return
-    push_data = {
-        'to': to_token,
-        'title': title,
-        'body': body,
-        'sound': 'default'
-    }
-    try:
-        response = requests.post(EXPO_PUSH_URL, json=[push_data], timeout=5)
-        if response.status_code != 200:
-            print(f"Push send failed: {response.text}")
-    except Exception as e:
-        print("Push send exception:", e)
+# --- Utility Functions --- (Defined above, kept for context in original app.py)
 
-def get_user_token(user_id):
-    conn = db_connect()
-    cursor = conn.cursor()
-    cursor.execute('SELECT push_token FROM push_tokens WHERE user_id = ?', (user_id,))
-    token = cursor.fetchone()
-    conn.close()
-    return token[0] if token else None
-
-def get_user_name(iban):
-    conn = db_connect()
-    cursor = conn.cursor()
-    cursor.execute('SELECT name FROM users WHERE iban = ?', (iban,))
-    name = cursor.fetchone()
-    conn.close()
-    return name[0] if name else 'Unknown'
-
-def transfer_amount(from_iban, to_iban, amount_cents):
-    """
-    amount_cents: integer
-    """
-    conn = db_connect()
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT balance_cents FROM bank_balances WHERE iban = ?', (from_iban,))
-    from_result = cursor.fetchone()
-    from_balance = from_result[0] if from_result else 0
-
-    cursor.execute('SELECT balance_cents FROM bank_balances WHERE iban = ?', (to_iban,))
-    to_result = cursor.fetchone()
-    to_balance = to_result[0] if to_result else 0
-
-    new_from_balance = from_balance - amount_cents
-    new_to_balance = to_balance + amount_cents
-
-    cursor.execute('INSERT OR REPLACE INTO bank_balances (iban, balance_cents) VALUES (?, ?)', (from_iban, new_from_balance))
-    cursor.execute('INSERT OR REPLACE INTO bank_balances (iban, balance_cents) VALUES (?, ?)', (to_iban, new_to_balance))
-
-    conn.commit()
-    conn.close()
-    return new_from_balance, new_to_balance
+# --- Routes ---
 
 @app.route('/users', methods=['GET'])
 def get_users():
     conn = db_connect()
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT u.id, u.name, u.email, u.phone, u.iban, COALESCE(b.balance_cents, 0) as balance_cents
-        FROM users u
-        LEFT JOIN bank_balances b ON u.iban = b.iban
-        ORDER BY u.id
-    ''')
-    users = cursor.fetchall()
-    conn.close()
-    return jsonify([{
-        'id': row[0], 'name': row[1], 'email': row[2], 'phone': row[3],
-        'iban': row[4], 'balance_cents': row[5]
-    } for row in users])
+    cursor.execute('SELECT id, name, email, phone, iban FROM users')
+    users_data = cursor.fetchall()
+    
+    # Fetch balances
+    users_list = []
+    for id, name, email, phone, iban in users_data:
+        cursor.execute('SELECT balance_cents FROM bank_balances WHERE iban = ?', (iban,))
+        balance_cents = cursor.fetchone()[0] if cursor.rowcount > 0 else 0
+        users_list.append({
+            'id': id,
+            'name': name,
+            'email': email,
+            'phone': phone,
+            'iban': iban,
+            'balance': balance_cents / 100.0
+        })
 
+    conn.close()
+    return jsonify(users_list)
+
+# Route for login and updating push token
 @app.route('/login/<int:user_id>', methods=['POST'])
 def login(user_id):
     try:
-        data = request.json or {}
+        data = request.get_json()
         push_token = data.get('pushToken')
-        print(f"Login for user {user_id}: token {'provided' if push_token else 'skipped'}")
-        if push_token:
-            conn = db_connect()
-            cursor = conn.cursor()
-            cursor.execute('INSERT OR REPLACE INTO push_tokens (user_id, push_token) VALUES (?, ?)', (user_id, push_token))
-            conn.commit()
+        
+        conn = db_connect()
+        cursor = conn.cursor()
+        
+        # Check if user exists
+        cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
+        if cursor.fetchone() is None:
             conn.close()
-        return jsonify({'message': 'Logged in successfully', 'user_id': user_id})
+            return jsonify({'error': 'User not found'}), 404
+        
+        if push_token:
+            # Insert or update the push token
+            cursor.execute('''
+                INSERT OR REPLACE INTO push_tokens (user_id, push_token) 
+                VALUES (?, ?)
+            ''', (user_id, push_token))
+            conn.commit()
+            print(f"Token updated for user {user_id}")
+            
+        conn.close()
+        return jsonify({'message': 'Login successful and token updated (if provided)'})
     except Exception as e:
         print(f"Login error: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Route for logout (clearing push token)
 @app.route('/logout/<int:user_id>', methods=['POST'])
 def logout(user_id):
     try:
         conn = db_connect()
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM push_tokens WHERE user_id = ?', (user_id,))
+        # Remove the token
+        cursor.execute('UPDATE push_tokens SET push_token = NULL WHERE user_id = ?', (user_id,))
         conn.commit()
         conn.close()
-        print(f"Push token removed for user {user_id}")
-        return jsonify({'message': 'Logged out, push token removed'}), 200
+        return jsonify({'message': 'Logged out successfully (token cleared)'})
     except Exception as e:
         print(f"Logout error: {e}")
         return jsonify({'error': str(e)}), 500
@@ -212,46 +245,47 @@ def logout(user_id):
 @app.route('/add_money', methods=['POST'])
 def add_money():
     try:
-        data = request.json
-        from_iban = data.get('from_iban')
-        to_iban = data.get('to_iban')
-        amount_cents = int(data.get('amount_cents', 1000))
-
-        if not from_iban or not to_iban:
-            return jsonify({'error': 'from_iban and to_iban required'}), 400
-        if from_iban == to_iban:
-            return jsonify({'error': 'Cannot transfer to self'}), 400
+        data = request.get_json()
+        from_iban = data['from_iban']
+        to_iban = data['to_iban']
+        amount_cents = int(data['amount_cents'])
+        
+        if amount_cents <= 0:
+            return jsonify({'error': 'Amount must be positive'}), 400
 
         conn = db_connect()
         cursor = conn.cursor()
 
-        cursor.execute('SELECT id FROM users WHERE iban = ?', (from_iban,))
-        if not cursor.fetchone():
+        # Deduct from sender
+        cursor.execute('''
+            UPDATE bank_balances SET balance_cents = balance_cents - ? WHERE iban = ? AND balance_cents >= ?
+        ''', (amount_cents, from_iban, amount_cents))
+        if cursor.rowcount == 0:
             conn.close()
-            return jsonify({'error': 'Sender IBAN not found'}), 404
-        cursor.execute('SELECT id FROM users WHERE iban = ?', (to_iban,))
-        if not cursor.fetchone():
-            conn.close()
-            return jsonify({'error': 'Receiver IBAN not found'}), 404
+            return jsonify({'error': 'Sender not found or insufficient funds'}), 400
 
-        new_from_balance, new_to_balance = transfer_amount(from_iban, to_iban, amount_cents)
+        # Add to recipient
+        cursor.execute('''
+            UPDATE bank_balances SET balance_cents = balance_cents + ? WHERE iban = ?
+        ''', (amount_cents, to_iban))
 
-        cursor = conn.cursor()
-        cursor.execute('SELECT id FROM users WHERE iban = ?', (to_iban,))
-        receiver_id = cursor.fetchone()[0]
-        token = get_user_token(receiver_id)
-        sender_name = get_user_name(from_iban)
-        send_push(token, 'Payment Received!', f'Sender: {sender_name}, Amount: €{amount_cents/100:.2f}')
+        # Get recipient ID and name for push notification
+        cursor.execute('SELECT id, name FROM users WHERE iban = ?', (to_iban,))
+        to_user = cursor.fetchone()
+        to_user_id = to_user[0]
+        to_user_name = to_user[1]
+        
+        # Get sender name
+        cursor.execute('SELECT name FROM users WHERE iban = ?', (from_iban,))
+        from_user_name = cursor.fetchone()[0]
 
+        conn.commit()
         conn.close()
-        return jsonify({
-            'message': f'Transferred €{amount_cents/100:.2f} successfully',
-            'from_iban': from_iban,
-            'to_iban': to_iban,
-            'amount_cents': amount_cents,
-            'from_balance': new_from_balance,
-            'to_balance': new_to_balance
-        })
+        
+        token = get_user_token(to_user_id)
+        send_push(token, 'Money Received!', f'You received €{amount_cents/100:.2f} from {from_user_name}.')
+
+        return jsonify({'message': 'Money transferred', 'amount_cents': amount_cents})
     except Exception as e:
         print(f"Transfer error: {e}")
         return jsonify({'error': str(e)}), 500
@@ -259,175 +293,133 @@ def add_money():
 @app.route('/request_money', methods=['POST'])
 def request_money():
     try:
-        data = request.json
-        payer_iban = data.get('from_iban')  # Who pays (selected)
-        requester_iban = data.get('to_iban')  # Who requests (current)
-        amount_cents = int(data.get('amount_cents', 1000))
-
-        if not payer_iban or not requester_iban:
-            return jsonify({'error': 'payer_iban and requester_iban required'}), 400
+        data = request.get_json()
+        requester_iban = data['to_iban'] # The user requesting the money
+        payer_iban = data['from_iban']   # The user who owes the money
+        amount_cents = int(data['amount_cents'])
+        
+        if amount_cents <= 0:
+            return jsonify({'error': 'Amount must be positive'}), 400
 
         conn = db_connect()
         cursor = conn.cursor()
+        
+        # Get IDs
+        cursor.execute('SELECT id, name FROM users WHERE iban = ?', (requester_iban,))
+        requester_id, requester_name = cursor.fetchone()
+        
+        cursor.execute('SELECT id, name FROM users WHERE iban = ?', (payer_iban,))
+        payer_id, payer_name = cursor.fetchone()
 
-        cursor.execute('SELECT id FROM users WHERE iban = ?', (payer_iban,))
-        payer_id = cursor.fetchone()
-        if not payer_id:
-            conn.close()
-            return jsonify({'error': 'Payer IBAN not found'}), 404
-        payer_id = payer_id[0]
-
-        cursor.execute('SELECT id FROM users WHERE iban = ?', (requester_iban,))
-        requester_id = cursor.fetchone()
-        if not requester_id:
-            conn.close()
-            return jsonify({'error': 'Requester IBAN not found'}), 404
-        requester_id = requester_id[0]
-
-        if payer_id == requester_id:
-            conn.close()
-            return jsonify({'error': 'Cannot request from self'}), 400
-
-        created_at = datetime.now().isoformat()
+        # Check if a similar pending request exists to prevent spamming
         cursor.execute('''
-            INSERT INTO pending_requests (requester_id, payer_id, amount_cents, status, created_at)
-            VALUES (?, ?, ?, 'pending', ?)
-        ''', (requester_id, payer_id, amount_cents, created_at))
-        request_id = cursor.lastrowid
-        conn.commit()
-
-        token = get_user_token(payer_id)
-        requester_name = get_user_name(requester_iban)
-        send_push(token, 'Money Request!', f'{requester_name} requests €{amount_cents/100:.2f} from you. Open app to confirm/deny.')
-
-        conn.close()
-        return jsonify({'message': 'Request sent successfully', 'request_id': request_id, 'amount_cents': amount_cents})
-    except Exception as e:
-        print(f"Request error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/split_request', methods=['POST'])
-def split_request():
-    """
-    Expect JSON:
-    {
-      "payer_iban": "ALICE123..",
-      "recipients": [
-         {"iban": "BOB...", "amount_cents": 1000},
-         {"iban": "CAROL...", "amount_cents": 1000}
-      ],
-      "total_cents": 3000
-    }
-    Creates multiple pending_requests rows (one per recipient).
-    """
-    try:
-        data = request.json
-        payer_iban = data.get('payer_iban')
-        recipients = data.get('recipients', [])
-        total_cents = int(data.get('total_cents', 0))
-
-        if not payer_iban or not recipients:
-            return jsonify({'error': 'payer_iban and recipients required'}), 400
-
-        conn = db_connect()
-        cursor = conn.cursor()
-
-        # Validate payer exists
-        cursor.execute('SELECT id FROM users WHERE iban = ?', (payer_iban,))
-        payer_row = cursor.fetchone()
-        if not payer_row:
+            SELECT id FROM pending_requests 
+            WHERE requester_id = ? AND payer_id = ? AND amount_cents = ? AND status = 'pending'
+        ''', (requester_id, payer_id, amount_cents))
+        if cursor.fetchone():
             conn.close()
-            return jsonify({'error': 'Payer IBAN not found'}), 404
-        payer_id = payer_row[0]  # Original payer (requester)
+            return jsonify({'error': 'Similar pending request already exists'}), 409 # Conflict
 
-        inserted = []
-        created_at = datetime.now().isoformat()
-        for r in recipients:
-            iban = r.get('iban')  # Recipient IBAN (who will pay)
-            amount_cents = int(r.get('amount_cents', 0))
-            cursor.execute('SELECT id FROM users WHERE iban = ?', (iban,))
-            row = cursor.fetchone()
-            if not row:
-                # skip unknown recipient
-                print(f"Skipping unknown recipient iban {iban}")
-                continue
-            recipient_id = row[0]  # Recipient ID (payer_id)
-
-            # Insert with correct roles: original payer requests from recipient
-            cursor.execute('''
-                INSERT INTO pending_requests (requester_id, payer_id, amount_cents, status, created_at)
-                VALUES (?, ?, ?, 'pending', ?)
-            ''', (payer_id, recipient_id, amount_cents, created_at))
-            req_id = cursor.lastrowid
-            inserted.append({'request_id': req_id, 'requester_id': payer_id, 'iban': iban, 'amount_cents': amount_cents})
-
-            # Push to recipient (payer_id)
-            token = get_user_token(recipient_id)
-            requester_name = get_user_name(payer_iban)
-            send_push(token, 'Money Request (split)!', f'{requester_name} requests €{amount_cents/100:.2f} from you for split.')
-
+        # Create request
+        cursor.execute('''
+            INSERT INTO pending_requests (requester_id, payer_id, amount_cents) 
+            VALUES (?, ?, ?)
+        ''', (requester_id, payer_id, amount_cents))
         conn.commit()
+
+        # Send notification to the Payer (who needs to approve/deny)
+        token = get_user_token(payer_id)
+        send_push(token, 'Money Request', f'A request for €{amount_cents/100:.2f} received from {requester_name}.')
+
         conn.close()
-        return jsonify({'message': 'Split requests created', 'created': inserted})
+        return jsonify({'message': 'Money request sent', 'amount_cents': amount_cents})
     except Exception as e:
-        print(f"Split error: {e}")
+        print(f"Request money error: {e}")
         return jsonify({'error': str(e)}), 500
-    
+
 @app.route('/pending_requests', methods=['GET'])
 def get_pending_requests():
-    user_id = request.args.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'user_id required'}), 400
+    try:
+        user_id = request.args.get('user_id', type=int)
+        if not user_id:
+            return jsonify({'error': 'user_id is required'}), 400
 
-    conn = db_connect()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT pr.id, u.name as requester_name, pr.amount_cents, pr.created_at
-        FROM pending_requests pr
-        JOIN users u ON pr.requester_id = u.id
-        WHERE pr.payer_id = ? AND pr.status = 'pending'
-        ORDER BY pr.created_at DESC
-    ''', (user_id,))
-    requests = cursor.fetchall()
-    conn.close()
-    return jsonify([{
-        'id': row[0], 'requester_name': row[1], 'amount_cents': row[2], 'created_at': row[3]
-    } for row in requests])
+        conn = db_connect()
+        cursor = conn.cursor()
+        
+        # Get requests where current user is the Payer (needs to act)
+        cursor.execute('''
+            SELECT pr.id, pr.requester_id, pr.amount_cents, u.name as requester_name
+            FROM pending_requests pr
+            JOIN users u ON pr.requester_id = u.id
+            WHERE pr.payer_id = ? AND pr.status = 'pending'
+            ORDER BY pr.created_at DESC
+        ''', (user_id,))
+        
+        requests_list = []
+        for id, requester_id, amount_cents, requester_name in cursor.fetchall():
+            requests_list.append({
+                'id': id,
+                'requester_id': requester_id,
+                'amount_cents': amount_cents,
+                'amount': amount_cents / 100.0,
+                'requester_name': requester_name
+            })
+            
+        conn.close()
+        return jsonify(requests_list)
+    except Exception as e:
+        print(f"Fetch requests error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/approve_request/<int:request_id>', methods=['POST'])
 def approve_request(request_id):
     try:
-        data = request.json or {}
-        amount_cents = int(data.get('amount_cents', 1000))
-
+        # Payer is implicit in this process (must be current user in front-end)
         conn = db_connect()
         cursor = conn.cursor()
+        
+        # Select request details
         cursor.execute('''
-            SELECT requester_id, payer_id FROM pending_requests WHERE id = ? AND status = 'pending'
+            SELECT requester_id, payer_id, amount_cents FROM pending_requests WHERE id = ? AND status = 'pending'
         ''', (request_id,))
         req = cursor.fetchone()
+        
         if not req:
             conn.close()
             return jsonify({'error': 'Request not found or already processed'}), 404
-        requester_id, payer_id = req
+            
+        requester_id, payer_id, amount_cents = req
 
-        # Fetch IBANs
-        cursor.execute('SELECT iban FROM users WHERE id = ?', (payer_id,))
-        payer_iban = cursor.fetchone()[0]
-        cursor.execute('SELECT iban FROM users WHERE id = ?', (requester_id,))
-        requester_iban = cursor.fetchone()[0]
+        # Get IBANs
+        cursor.execute('SELECT iban, name FROM users WHERE id = ?', (payer_id,))
+        payer_iban, payer_name = cursor.fetchone()
+        cursor.execute('SELECT iban, name FROM users WHERE id = ?', (requester_id,))
+        requester_iban, requester_name = cursor.fetchone()
+        
+        # Start transaction: Deduct from Payer
+        cursor.execute('''
+            UPDATE bank_balances SET balance_cents = balance_cents - ? WHERE iban = ? AND balance_cents >= ?
+        ''', (amount_cents, payer_iban, amount_cents))
+        if cursor.rowcount == 0:
+            conn.close()
+            # Send notification to requester that payer has insufficient funds
+            token = get_user_token(requester_id)
+            send_push(token, 'Request Failed', f'Your request from {payer_name} for €{amount_cents/100:.2f} failed due to insufficient funds.')
+            return jsonify({'error': 'Insufficient funds to approve request'}), 400
 
-        # Transfer cents
-        new_payer_balance, new_requester_balance = transfer_amount(payer_iban, requester_iban, amount_cents)
+        # Add to Requester
+        cursor.execute('''
+            UPDATE bank_balances SET balance_cents = balance_cents + ? WHERE iban = ?
+        ''', (amount_cents, requester_iban))
 
-        # Update status
+        # Update request status
         cursor.execute('UPDATE pending_requests SET status = "approved" WHERE id = ?', (request_id,))
         conn.commit()
-
-        # Push to requester
+        
+        # Notify Requester
         token = get_user_token(requester_id)
-        payer_name = get_user_name(payer_iban)
-        send_push(token, 'Request Approved!', f'Your request from {payer_name} for €{amount_cents/100:.2f} approved!')
+        send_push(token, 'Request Approved', f'{payer_name} approved your request for €{amount_cents/100:.2f}.')
 
         conn.close()
         return jsonify({'message': 'Request approved and transferred', 'amount_cents': amount_cents})
@@ -451,7 +443,9 @@ def deny_request(request_id):
 
         # Fetch payer name
         cursor.execute('SELECT name FROM users WHERE id = ?', (payer_id,))
-        payer_name = cursor.fetchone()[0]
+        # Check if the fetch was successful before accessing index 0
+        payer_name_data = cursor.fetchone()
+        payer_name = payer_name_data[0] if payer_name_data else "Unknown"
 
         cursor.execute('UPDATE pending_requests SET status = "denied" WHERE id = ?', (request_id,))
         conn.commit()
@@ -465,5 +459,148 @@ def deny_request(request_id):
         print(f"Deny error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/split_request', methods=['POST'])
+def split_request():
+    try:
+        data = request.get_json()
+        payer_iban = data['payer_iban']
+        recipients = data['recipients'] # [{'iban': '...', 'amount_cents': 1000}, ...]
+        total_cents = int(data['total_cents'])
+        
+        if total_cents <= 0:
+            return jsonify({'error': 'Total amount must be positive'}), 400
+
+        conn = db_connect()
+        cursor = conn.cursor()
+        
+        # Get Payer ID and name (The one creating the requests)
+        cursor.execute('SELECT id, name FROM users WHERE iban = ?', (payer_iban,))
+        payer_id, payer_name = cursor.fetchone()
+        
+        # Store requests and notify payers (recipients in the split)
+        new_request_count = 0
+        for recipient in recipients:
+            recipient_iban = recipient['iban']
+            amount_cents = int(recipient['amount_cents'])
+            
+            # Find the recipient's user ID (they are the Payer in this request)
+            cursor.execute('SELECT id, name FROM users WHERE iban = ?', (recipient_iban,))
+            recipient_user_data = cursor.fetchone()
+            if not recipient_user_data: continue # Skip if user not found
+            recipient_id, recipient_name = recipient_user_data
+            
+            # Check for existing request to prevent duplicates (same as request_money)
+            cursor.execute('''
+                SELECT id FROM pending_requests 
+                WHERE requester_id = ? AND payer_id = ? AND amount_cents = ? AND status = 'pending'
+            ''', (payer_id, recipient_id, amount_cents))
+            if cursor.fetchone():
+                print(f"Skipping duplicate pending request for {recipient_name}")
+                continue
+
+            # Payer in the request is the recipient (who owes the money)
+            # Requester is the current user (payer_id)
+            cursor.execute('''
+                INSERT INTO pending_requests (requester_id, payer_id, amount_cents) 
+                VALUES (?, ?, ?)
+            ''', (payer_id, recipient_id, amount_cents))
+            new_request_count += 1
+            
+            # Send notification to the recipient/payer
+            token = get_user_token(recipient_id)
+            send_push(token, 'Bill Split Request', f'{payer_name} requested €{amount_cents/100:.2f} from you to split a bill.')
+
+        conn.commit()
+        conn.close()
+        
+        if new_request_count == 0:
+            return jsonify({'message': 'No new split requests were created (possible duplicates).', 'total_cents': total_cents})
+
+        return jsonify({'message': f'Split request created: {new_request_count} payment requests sent.', 'total_cents': total_cents})
+    except Exception as e:
+        print(f"Split request error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# --- NEW: Group Endpoints ---
+
+@app.route('/groups', methods=['GET'])
+def get_groups():
+    try:
+        creator_id = request.args.get('creator_id', type=int)
+        if not creator_id:
+            return jsonify({'error': 'creator_id is required'}), 400
+
+        conn = db_connect()
+        cursor = conn.cursor()
+        
+        # Fetch groups where the current user is the creator
+        cursor.execute('''
+            SELECT id, name, member_ids FROM groups WHERE creator_id = ?
+            ORDER BY created_at DESC
+        ''', (creator_id,))
+        
+        groups_list = []
+        for id, name, member_ids_json in cursor.fetchall():
+            try:
+                # Deserialize the JSON string back into a list of member IDs
+                member_ids = json.loads(member_ids_json)
+            except json.JSONDecodeError:
+                member_ids = [] # Default to empty if invalid JSON
+            
+            groups_list.append({
+                'id': id,
+                'name': name,
+                'creator_id': creator_id,
+                'member_ids': member_ids # List of integer IDs
+            })
+            
+        conn.close()
+        return jsonify(groups_list)
+    except Exception as e:
+        print(f"Fetch groups error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/groups', methods=['POST'])
+def create_group():
+    try:
+        data = request.get_json()
+        creator_id = data['creator_id']
+        name = data['name']
+        # member_ids is expected to be a list of user IDs
+        member_ids_list = data['member_ids'] 
+        
+        if not name or not member_ids_list:
+            return jsonify({'error': 'Group name and members are required'}), 400
+
+        # Validate that member_ids is a list
+        if not isinstance(member_ids_list, list):
+            return jsonify({'error': 'member_ids must be a list of user IDs'}), 400
+
+        # Serialize the list of member IDs to a JSON string for storage
+        member_ids_json = json.dumps(member_ids_list)
+
+        conn = db_connect()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO groups (name, creator_id, member_ids) 
+            VALUES (?, ?, ?)
+        ''', (name, creator_id, member_ids_json))
+        group_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Group created successfully', 
+            'id': group_id,
+            'name': name,
+            'member_ids': member_ids_list
+        }), 201
+
+    except Exception as e:
+        print(f"Create group error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(host='0.0.0.0', port=5000)

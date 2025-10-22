@@ -15,30 +15,30 @@ export const renderLoginUser = (styles, handleLogin) => ({ item }) => (
 );
 
 // Renderer for the Contacts screen (Send/Request flow)
+// NOTE: isSelf check is removed in ContactsScreen.js
 export const renderUser = (styles, currentUser, isRequestFlow, handleSelectRecipient) => ({ item }) => {
-  const isSelf = item.id === currentUser?.id;
   return (
     <TouchableOpacity
-      style={[styles.row, isSelf && styles.disabledRow]}
-      onPress={() => !isSelf && handleSelectRecipient(item)}
-      disabled={isSelf}
+      style={styles.row}
+      onPress={() => handleSelectRecipient(item)}
       activeOpacity={0.7}
     >
       <View style={styles.cell}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.label}>{item.phone}</Text>
-        <Text style={styles.smallBalance}>Balance: €{(item.balance_cents/100).toFixed(2)}</Text>
+        {/* Assumes backend now correctly supplies 'balance' (a float/number) */}
+        <Text style={styles.contactBalance}>Balance: €{item.balance.toFixed(2)}</Text>
       </View>
-      <Text style={[styles.actionText, isSelf && styles.disabledText]}>
-        {isSelf ? 'You' : isRequestFlow ? 'Request From' : 'Send To'}
+      <Text style={styles.actionText}>
+        {isRequestFlow ? 'Request From' : 'Send To'}
       </Text>
     </TouchableOpacity>
   );
 };
 
-// Renderer for the Split selection screen
-export const renderSplitContact = (styles, currentUser, splitSelectedIds, toggleSplitSelect) => ({ item }) => {
-  // NOTE: The current user is now filtered out in App.js, so we don't need the isSelf check.
+// Renderer for the Split Selection screen
+// Action text is removed as requested
+export const renderSplitUser = (styles, toggleSplitSelect, splitSelectedIds) => ({ item }) => {
   const selected = splitSelectedIds.includes(item.id);
   return (
     <TouchableOpacity
@@ -50,9 +50,7 @@ export const renderSplitContact = (styles, currentUser, splitSelectedIds, toggle
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.label}>{item.email}</Text>
       </View>
-      <Text style={styles.actionText}>
-        {selected ? 'Selected' : 'Select'}
-      </Text>
+      {/* NO ACTION TEXT on Split Selection screen as requested */}
     </TouchableOpacity>
   );
 };
@@ -74,7 +72,7 @@ export const renderPendingRequest = (styles, handleApproveRequest, handleDenyReq
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.denyButton}
-        onPress={() => handleDenyRequest(item.id, item.requester_name, item.amount_cents)}
+        onPress={() => handleDenyRequest(item.id, item.requester_name)}
       >
         <Text style={styles.denyText}>Deny</Text>
       </TouchableOpacity>

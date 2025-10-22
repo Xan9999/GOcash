@@ -23,6 +23,7 @@ import SplitSelectionScreen from './Components/SplitSelectionScreen';
 import TransferScreen from './Components/TransferScreen';
 import RequestsScreen from './Components/RequestsScreen';
 import SplitConfirmScreen from './Components/SplitConfirmScreen';
+import GroupCreationScreen from './Components/GroupCreationScreen'; // NEW
 import { renderLoginUser } from './Components/Renderers';
 
 export default function App() {
@@ -32,7 +33,7 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [showLogin, setShowLogin] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'contacts', 'transfer', 'requests', 'split', 'split_confirm'
+  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'contacts', 'transfer', 'requests', 'split', 'split_confirm', 'group_create'
   const [selectedRecipient, setSelectedRecipient] = useState(null); // For transfer/request
   const [isRequestFlow, setIsRequestFlow] = useState(false); // Send vs Request mode
   const [pendingRequests, setPendingRequests] = useState([]); // For requests screen
@@ -44,6 +45,9 @@ export default function App() {
   // Setting initial weights to 50 for a middle-point starting position
   const [shares, setShares] = useState([]); // Array of WEIGHTS (0-100) for each selected user
   const [userSharePercent, setUserSharePercent] = useState(50); // User's WEIGHT, starts at 50
+
+  // --- NEW: Group State ---
+  const [groups, setGroups] = useState([]); 
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
@@ -84,7 +88,6 @@ export default function App() {
 
         const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
         const pushToken = tokenData.data;
-        // console.log('Push token for registration:', pushToken ? 'Fetched' : 'Failed'); // Removed verbose log
 
         if (pushToken) {
           const response = await fetch(`${API_BASE}/login/${currentUser.id}`, {
@@ -120,6 +123,68 @@ export default function App() {
     }
     setLoading(false);
     setRefreshing(false);
+  };
+  
+  // --- NEW: Fetch Groups ---
+  const fetchGroups = async (userId) => {
+    if (!userId) return;
+    console.log('Fetching groups...');
+    try {
+      const response = await fetch(`${API_BASE}/groups?creator_id=${userId}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch groups`);
+      const data = await response.json();
+      setGroups(data);
+      console.log('Groups fetched:', data.length);
+    } catch (error) {
+      console.error('Fetch groups error:', error);
+      // setMessage('Error fetching groups.'); // Keep screen clean
+    }
+  };
+  
+  const handleCreateGroup = async (groupName, memberIds, redirectToSplitConfirm = false) => {
+    if (!currentUser) return;
+    setLoading(true);
+    try {
+      const body = {
+        creator_id: currentUser.id,
+        name: groupName,
+        member_ids: memberIds,
+      };
+      
+      const response = await fetch(`${API_BASE}/groups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create group');
+      }
+      
+      setMessage(`Group '${groupName}' created successfully!`);
+      fetchGroups(currentUser.id); // Refresh group list
+      
+      if (redirectToSplitConfirm) {
+        // Automatically select group members and navigate to confirm screen
+        setSplitSelectedIds(memberIds);
+        handleConfirmSelection(memberIds); // Use the new signature
+      } else {
+        // Go back to the split selection screen
+        setCurrentScreen('split');
+      }
+
+    } catch (error) {
+      console.error('Group creation error:', error);
+      Alert.alert('Group Error', error.message);
+    }
+    setLoading(false);
+  };
+
+  const handleGroupSelection = (memberIds) => {
+    // Select all members of the group and go to split confirm screen
+    setSplitSelectedIds(memberIds);
+    handleConfirmSelection(memberIds); // Use the new signature
   };
 
   const fetchPendingRequests = async () => {
@@ -166,6 +231,7 @@ export default function App() {
       setMessage(`Logged in as ${user.name}${Platform.OS === 'web' ? ' (Web: Notifications disabled)' : ''}`); 
       console.log('Login success, hiding modal');
       fetchUsers();
+      fetchGroups(user.id); // Fetch groups after successful login
       fetchPendingRequests(); // Check for pending on login
     } catch (error) {
       console.error('Full login error:', error);
@@ -189,6 +255,7 @@ export default function App() {
       setCurrentUser(null);
       setShowLogin(true);
       setCurrentScreen('home');
+      setGroups([]); // Clear groups on logout
       setMessage('Logged out.');
     } catch (error) {
       console.error('Logout error:', error);
@@ -295,19 +362,22 @@ export default function App() {
   // --- Split Handlers ---
   const toggleSplitSelect = (userId) => {
     setSplitSelectedIds(prev => {
-      if (prev.includes(userId)) return prev.filter(id => id !== userId);
-      return [...prev, userId];
+      // Ensure we treat IDs as numbers for strict comparison if they came from JSON (member_ids)
+      const numericId = parseInt(userId);
+      if (prev.includes(numericId)) return prev.filter(id => id !== numericId);
+      return [...prev, numericId];
     });
   };
 
-  const handleConfirmSelection = () => {
-    if (splitSelectedIds.length === 0) {
+  // Updated to take optional memberIds (used when selecting a group)
+  const handleConfirmSelection = (memberIdsToConfirm = splitSelectedIds) => {
+    if (memberIdsToConfirm.length === 0) {
       Alert.alert('Select people', 'Please select at least one person to split with.');
       return;
     }
     // Set initial WEIGHT for all to 50 for a middle starting point
     const initialWeight = 50;
-    setShares(Array(splitSelectedIds.length).fill(initialWeight));
+    setShares(Array(memberIdsToConfirm.length).fill(initialWeight));
     setUserSharePercent(initialWeight); 
     setSplitAmountInput('30');
     setCurrentScreen('split_confirm');
@@ -440,19 +510,21 @@ export default function App() {
   };
   // --- End Split Handlers ---
 
-  // Load persisted login
+  // Load persisted login and initial data fetches
   useEffect(() => {
     const loadUser = async () => {
       if (users.length === 0) return;
       const savedId = await AsyncStorage.getItem('currentUserId');
+      const numericId = savedId ? parseInt(savedId) : null;
       console.log('Checking saved login:', savedId);
-      if (savedId) {
-        const savedUser = users.find(u => u.id === parseInt(savedId));
+      if (numericId) {
+        const savedUser = users.find(u => u.id === numericId);
         if (savedUser) {
           console.log('Restoring login for:', savedUser.name);
           setCurrentUser(savedUser);
           setShowLogin(false);
           fetchUsers();
+          fetchGroups(numericId); // Fetch groups on startup
           fetchPendingRequests();
           return;
         }
@@ -468,7 +540,15 @@ export default function App() {
     fetchUsers();
   }, []);
   
-  // Refresh pending requests when on home screen or user changes
+  // Fetch groups and requests when user logs in/changes
+  useEffect(() => {
+    if (currentUser) {
+      fetchGroups(currentUser.id);
+      fetchPendingRequests();
+    }
+  }, [currentUser]);
+
+  // Refresh pending requests when on home screen
   useEffect(() => {
     if (currentUser && currentScreen === 'home') {
       fetchPendingRequests();
@@ -598,6 +678,8 @@ export default function App() {
             setShares={setShares}
             setUserSharePercent={setUserSharePercent}
             loading={loading}
+            groups={groups} // NEW
+            handleGroupSelection={handleGroupSelection} // NEW
           />
         )}
         {!showLogin && currentScreen === 'split_confirm' && (
@@ -622,8 +704,20 @@ export default function App() {
             setUserSharePercent={setUserSharePercent}
           />
         )}
+        
+        {/* NEW: Group Creation Screen */}
+        {!showLogin && currentScreen === 'group_create' && (
+          <GroupCreationScreen
+            currentUser={currentUser}
+            users={users}
+            splitSelectedIds={splitSelectedIds} // Members already selected
+            handleCreateGroup={handleCreateGroup}
+            setCurrentScreen={setCurrentScreen}
+            loading={loading}
+          />
+        )}
 
-        {/* Message bar for home, contacts, requests, split selection */}
+        {/* Message bar for home, contacts, requests, split selection, group creation */}
         {message && !showLogin && currentScreen !== 'transfer' && currentScreen !== 'split_confirm' && (
             <View style={{ padding: 10, backgroundColor: 'rgba(0,0,0,0.5)' }}>
                 <Text style={styles.message}>{message}</Text>

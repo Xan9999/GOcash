@@ -71,7 +71,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: Platform.OS === 'web' ? 20 : 50,
     left: 20,
-    zIndex: 1,
+    zIndex: 10, // Increased zIndex to prevent overlap
+  },
+  // NEW: Add padding/margin to Back button to prevent overlap
+  backButtonPadded: {
+    padding: 5,
+    borderRadius: 4,
   },
   backText: {
     color: '#61dafb',
@@ -84,7 +89,7 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     marginBottom: 20,
-    marginTop: Platform.OS === 'web' ? 20 : 60,
+    marginTop: Platform.OS === 'web' ? 50 : 80, // Increased top margin
   },
   subtitle: {
     fontSize: 16,
@@ -95,132 +100,238 @@ const styles = StyleSheet.create({
   recipientInfo: {
     backgroundColor: 'white',
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 10,
+    marginHorizontal: 20,
     marginBottom: 20,
-    alignItems: 'center',
   },
-  recipientName: {
-    fontSize: 20,
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    color: 'white',
+    marginBottom: 5,
+  },  
+  amountLabel: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#282c34',
+    color: '#000000ff',
     marginBottom: 5,
   },
-  recipientPhone: {
-    fontSize: 16,
-    color: '#666',
+
+  // NEW: Style for Group Creation Label - much larger
+  groupLabel: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 8,
+    marginTop: 10,
   },
-  amountContainer: {
+    amountInput: {
     backgroundColor: 'white',
     padding: 15,
     borderRadius: 8,
-    marginBottom: 20,
+    fontSize: 24,
+    color: '#000000ff',
   },
-  amountLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#282c34',
-    marginBottom: 10,
+  textInput: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 18,
+    color: '#000',
   },
-  amountInput: {
+  textInputDisplay: {
+    backgroundColor: '#f9f9f9', 
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 18,
+    color: '#444',
     borderWidth: 1,
     borderColor: '#ddd',
-    padding: 10,
-    borderRadius: 4,
+    minHeight: 50,
+    marginTop: 5,
+  },
+  transactionSummary: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    marginHorizontal: 20,
+  },
+  summaryText: {
     fontSize: 18,
+    color: '#333',
     textAlign: 'center',
   },
   confirmButton: {
+    backgroundColor: '#61dafb',
     padding: 15,
     borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   confirmButtonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 16,
   },
-  requestRow: {
-    backgroundColor: 'white',
-    marginVertical: 8,
+  logoutButton: {
+    position: 'absolute',
+    top: Platform.OS === 'web' ? 20 : 50,
+    right: 20,
+    padding: 10,
+    zIndex: 10,
+  },
+  list: {
+    flex: 1,
+    paddingHorizontal: 10,
+    marginTop: 10,
+  },
+  loginRow: {
+    backgroundColor: '#ffffff',
     padding: 15,
     borderRadius: 8,
+    marginHorizontal: 20,
+    marginVertical: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  loginName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  loginDetail: {
+    fontSize: 14,
+    color: '#666',
+  },
+  // Used by ContactsScreen and SplitSelectionScreen
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    marginHorizontal: 10,
+    marginVertical: 7, // Increased vertical margin for spacing
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 1,
+    justifyContent: 'space-between',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  requestRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    marginHorizontal: 10,
+    marginVertical: 5,
   },
   requestInfo: {
-    flex: 1,
+    flex: 2,
   },
   requestRequester: {
-    fontSize: 18,
     fontWeight: 'bold',
-    color: '#282c34',
+    fontSize: 18,
   },
   requestAmount: {
     fontSize: 16,
     color: '#4CAF50',
-    marginVertical: 5,
+    fontWeight: 'bold',
+    marginTop: 5,
   },
   requestTime: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
+    color: '#999',
+    marginTop: 5,
   },
   requestButtons: {
+    flex: 1,
     flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
   approveButton: {
     backgroundColor: '#4CAF50',
     padding: 10,
-    borderRadius: 4,
-    marginLeft: 10,
-  },
-  denyButton: {
-    backgroundColor: '#f44336',
-    padding: 10,
-    borderRadius: 4,
+    borderRadius: 5,
     marginLeft: 10,
   },
   approveText: {
     color: 'white',
     fontWeight: 'bold',
   },
+  denyButton: {
+    backgroundColor: '#F44336',
+    padding: 10,
+    borderRadius: 5,
+    marginLeft: 10,
+  },
   denyText: {
     color: 'white',
     fontWeight: 'bold',
   },
+  sliderContainer: {
+    flex: 1,
+    paddingHorizontal: 10,
+    alignItems: 'stretch',
+    justifyContent: 'center',
+  },
+  personRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    marginHorizontal: 20,
+  },
+  personShare: {
+    width: 150, 
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  equalizeButton: {
+    backgroundColor: '#61dafb',
+    padding: 10,
+    borderRadius: 8,
+    marginHorizontal: 20,
+    marginTop: 10,
+  },
   emptyText: {
-    color: 'white',
+    color: '#ccc',
     textAlign: 'center',
+    marginTop: 20,
     fontSize: 16,
-    marginTop: 20,
   },
-  loginList: {
-    flex: 1,
-  },
-  loginRow: {
-    backgroundColor: 'white',
-    marginVertical: 8,
+  splitSelectHeader: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 15,
-    borderRadius: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
-  loginName: {
-    fontWeight: 'bold',
+  splitSelectTitle: {
     fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
   },
-  loginDetail: {
-    color: '#666',
+  splitSelectCount: {
     fontSize: 14,
+    color: '#ccc',
+    marginTop: 5,
   },
-  list: {
-    flex: 1,
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  row: {
-    backgroundColor: 'white',
-    marginVertical: 8,
-    padding: 15,
-    borderRadius: 8,
+  rowTextContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -239,17 +350,26 @@ const styles = StyleSheet.create({
   name: {
     fontWeight: 'bold',
     color: '#000000ff',
-    fontSize: 24,
+    fontSize: 20, // Slightly smaller for better fit
   },
   label: {
-    fontWeight: 'bold',
+    fontWeight: 'normal',
     color: '#838383ff',
-    fontSize: 15,
-    marginTop: 5,
+    fontSize: 14,
+    marginTop: 3,
   },
-  smallBalance: {
+  // NEW: Prominent balance text for contacts
+  contactBalance: {
     marginTop: 6,
-    color: '#444',
+    color: '#007AFF', // Blue color for positive attention
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  // NEW: Style for group names in list
+  groupRowText: {
+    fontWeight: 'bold',
+    color: '#2C3E50', // Darker color for groups
+    fontSize: 20,
   },
   actionText: {
     color: '#61dafb',
@@ -276,34 +396,47 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 20 : 40,
+    top: Platform.OS === 'web' ? 20 : 50,
     right: 20,
-    zIndex: 2,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    backgroundColor: '#f44336',
+    padding: 10,
+    zIndex: 10,
   },
-  logoutText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  shareRow: {
+  groupCreateActions: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30, // Increased margin
+    marginBottom: 40,
+  },
+  // User's additions
+  groupRow: {
+    backgroundColor: '#e6f7ff', 
+    borderLeftWidth: 5,
+    borderLeftColor: '#61dafb',
+  },
+  splitSelectionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+    backgroundColor: 'rgba(40, 44, 52, 0.95)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: Platform.OS === 'web' ? 20 : 40, // More padding for mobile safety area
+  },
+  confirmButtonDisabled: {
+    opacity: 0.5,
+  },
+  splitConfirmButton: {
+    flex: 2, 
+    marginRight: 10,
+  },
+  groupCreateButton: {
+    flex: 1,
+    backgroundColor: '#FF9800',
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
-    marginVertical: 8,
     padding: 15,
-    borderRadius: 8,
-  },
-  sliderContainer: {
-    alignItems: 'center',
-    width: 150,
-    marginLeft: 20,
-  },
-  slider: {
-    width: 120,
-    height: 50,
   },
 });
 
