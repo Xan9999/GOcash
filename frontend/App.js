@@ -23,74 +23,73 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [showLogin, setShowLogin] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [currentScreen, setCurrentScreen] = useState('home');  // 'home', 'contacts', 'transfer', 'requests'
+  const [currentScreen, setCurrentScreen] = useState('home');  // 'home', 'contacts', 'transfer', 'requests', 'split'
   const [selectedRecipient, setSelectedRecipient] = useState(null);  // For transfer/request
   const [isRequestFlow, setIsRequestFlow] = useState(false);  // Send vs Request mode
   const [pendingRequests, setPendingRequests] = useState([]);  // For requests screen
   const [amountInput, setAmountInput] = useState('10');  // Amount input, default 10
 
+  // For split
+  const [splitSelectedIds, setSplitSelectedIds] = useState([]); // array of user ids selected
+  const [splitAmountInput, setSplitAmountInput] = useState('30'); // total bill in euros
+
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
   console.log('Project ID:', projectId);  // Debug
-  const API_BASE = 'http://192.168.0.115:5000';
+  const API_BASE = 'http://192.168.0.109:5000';
 
-  // Notification handler (skip on web)
+  // Notification setup (mobile only, with token registration after login)
   useEffect(() => {
-    if (Platform.OS === 'web') return;
-    console.log('Setting up notification listener');
+    if (Platform.OS === 'web') {
+      console.log('Web platform detected: Skipping notification setup.');
+      return;
+    }
+
+    console.log('Setting up notification listener on mobile...');
     const subscription = Notifications.addNotificationReceivedListener(async (notification) => {
       const body = notification.request.content.body;
       console.log('Notification received:', body);
       Alert.alert('Notification', body);
-      // New: Refresh pending requests after notification (for foreground updates)
+      // Refresh pending requests after notification (for foreground updates)
       if (currentUser) {
         await fetchPendingRequests();
       }
     });
     return () => subscription?.remove();
-  }, [currentUser]);  // Depend on currentUser to re-subscribe if user changes
-  
-  // --- Polling + visibility/focus refresh for web to keep pending requests up-to-date ---
+  }, [currentUser]);
+
+  // Separate effect for token registration after login
   useEffect(() => {
-    // Only enable on web (mobile uses push notifications)
-    if (Platform.OS !== 'web') return;
-    if (!currentUser) return;
+    if (Platform.OS === 'web' || !currentUser || !projectId) return;
 
-    console.log('Starting web polling & visibility handlers for pending requests');
+    const registerToken = async () => {
+      console.log('Registering push token for user:', currentUser.id);
+      try {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Permissions not granted, skipping token registration');
+          return;
+        }
 
-    // Immediately fetch once when effect runs
-    fetchPendingRequests();
+        const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+        const pushToken = tokenData.data;
+        console.log('Push token for registration:', pushToken ? 'Fetched' : 'Failed');
 
-    // Poll every 10 seconds
-    const POLL_MS = 10000;
-    const intervalId = setInterval(() => {
-      fetchPendingRequests();
-    }, POLL_MS);
-
-    // Refresh when tab becomes visible (user returns to tab)
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('Tab visible — refresh pending requests');
-        fetchPendingRequests();
+        if (pushToken) {
+          const response = await fetch(`${API_BASE}/login/${currentUser.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pushToken }),
+          });
+          console.log('Token registration response:', response.status);
+        }
+      } catch (error) {
+        console.error('Token registration error:', error);
       }
     };
 
-    // Refresh when window gains focus
-    const onFocus = () => {
-      console.log('Window focus — refresh pending requests');
-      fetchPendingRequests();
-    };
-
-    window.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('focus', onFocus);
-
-    return () => {
-      console.log('Stopping web polling & visibility handlers');
-      clearInterval(intervalId);
-      window.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [currentUser]); // re-run when login changes
+    registerToken();
+  }, [currentUser, projectId]);
 
   const fetchUsers = async () => {
     console.log('Fetching users...');
@@ -115,6 +114,7 @@ export default function App() {
       const response = await fetch(`${API_BASE}/pending_requests?user_id=${currentUser.id}`);
       if (!response.ok) throw new Error('Failed to fetch requests');
       const data = await response.json();
+      // server returns amount in cents; convert to euros for display when rendering
       setPendingRequests(data);
       console.log('Pending requests updated:', data.length);
     } catch (error) {
@@ -126,31 +126,12 @@ export default function App() {
     console.log('handleLogin called for user:', user.id, user.name);
     setLoading(true);
     try {
-      let pushToken = null;
-      if (Platform.OS !== 'web') {
-        console.log('Mobile: Requesting perms...');
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status === 'granted') {
-          if (!projectId) throw new Error('No projectId in app.json. Run "eas init".');
-          console.log('Getting token with projectId:', projectId);
-          const tokenData = await Notifications.getExpoPushTokenAsync({
-            projectId: projectId,
-          });
-          pushToken = tokenData.data;
-          console.log('Token received:', pushToken ? 'Yes' : 'No');
-        } else {
-          console.log('Perms denied, skipping token');
-          Alert.alert('Permission Denied', 'Notifications disabled. Login continues without pushes.');
-        }
-      } else {
-        console.log('Web: Skipping push setup');
-      }
-
-      console.log('Sending login POST with token:', pushToken ? 'present' : 'null');
+      // Token handled in separate useEffect now
+      console.log('Sending login POST (token handled separately)');
       const response = await fetch(`${API_BASE}/login/${user.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pushToken }),
+        body: JSON.stringify({ pushToken: null }),  // Token sent later if available
       });
       const responseText = await response.text();
       console.log('Login response status:', response.status, 'body:', responseText);
@@ -178,6 +159,28 @@ export default function App() {
     setLoading(false);
   };
 
+  const handleLogout = async () => {
+    if (!currentUser) return;
+    setLoading(true);
+    try {
+      console.log('Logging out user', currentUser.id);
+      try {
+        await fetch(`${API_BASE}/logout/${currentUser.id}`, { method: 'POST' });
+      } catch (err) {
+        console.warn('Logout request to server failed:', err);
+      }
+      await AsyncStorage.removeItem('currentUserId');
+      setCurrentUser(null);
+      setShowLogin(true);
+      setCurrentScreen('home');
+      setMessage('Logged out.');
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Logout Error', error.message || 'Failed to logout.');
+    }
+    setLoading(false);
+  };
+
   const handleSelectRecipient = (recipient) => {
     setSelectedRecipient(recipient);
     setAmountInput('10');  // Reset amount
@@ -191,16 +194,21 @@ export default function App() {
       Alert.alert('Invalid Amount', 'Please enter a positive number.');
       return;
     }
-
     if (!currentUser || !selectedRecipient) return;
 
     setLoading(true);
     try {
+      // convert euros to cents integer
+      const amount_cents = Math.round(amount * 100);
       const endpoint = isRequestFlow ? '/request_money' : '/add_money';
-      const body = {
-        from_iban: isRequestFlow ? selectedRecipient.iban : currentUser.iban,  // Payer is 'from'
-        to_iban: isRequestFlow ? currentUser.iban : selectedRecipient.iban,    // Receiver is 'to'
-        amount: amount
+      const body = isRequestFlow ? {
+        from_iban: selectedRecipient.iban,
+        to_iban: currentUser.iban,
+        amount_cents
+      } : {
+        from_iban: currentUser.iban,
+        to_iban: selectedRecipient.iban,
+        amount_cents
       };
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
@@ -210,10 +218,10 @@ export default function App() {
       if (!response.ok) throw new Error('Failed to process transaction');
       const data = await response.json();
       const action = isRequestFlow ? 'requested' : 'sent';
-      setMessage(`${action.charAt(0).toUpperCase() + action.slice(1)} $${data.amount} ${isRequestFlow ? 'from' : 'to'} ${selectedRecipient.name}!`);
+      setMessage(`${action.charAt(0).toUpperCase() + action.slice(1)} €${(data.amount_cents/100).toFixed(2)} ${isRequestFlow ? 'from' : 'to'} ${selectedRecipient.name}!`);
       fetchUsers();
-      fetchPendingRequests();  // Always refresh pending after any transaction
-      setCurrentScreen('home');  // Redirect to home
+      fetchPendingRequests();
+      setCurrentScreen('home');
     } catch (error) {
       setMessage('Error processing transaction.');
       Alert.alert('Error', error.message);
@@ -221,37 +229,124 @@ export default function App() {
     setLoading(false);
   };
 
-  const handleApproveRequest = async (requestId, amount, requesterName) => {
+  const handleApproveRequest = async (requestId, amount_cents, requesterName) => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/approve_request/${requestId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ amount_cents }),
       });
       if (!response.ok) throw new Error('Failed to approve');
       const data = await response.json();
-      setMessage(`Approved request! Sent $${amount} to ${requesterName}.`);
-      fetchPendingRequests();
-      fetchUsers();
-      setCurrentScreen('home');
+      setMessage(`Approved request! Sent €${(amount_cents/100).toFixed(2)} to ${requesterName}.`);
+      fetchPendingRequests();  // Refresh list to remove the approved one
+      fetchUsers();  // Update balances
+      // No setCurrentScreen('home') - stay on requests screen
     } catch (error) {
       Alert.alert('Error', error.message);
     }
     setLoading(false);
   };
 
-  const handleDenyRequest = async (requestId, requesterName, amount) => {
+  const handleDenyRequest = async (requestId, requesterName, amount_cents) => {
     try {
       const response = await fetch(`${API_BASE}/deny_request/${requestId}`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to deny');
-      setMessage(`Denied request from ${requesterName} for $${amount}.`);
+      setMessage(`Denied request from ${requesterName} for €${(amount_cents/100).toFixed(2)}.`);
       fetchPendingRequests();
     } catch (error) {
       Alert.alert('Error', error.message);
     }
+  };
+
+  // Split: toggle selection for multi-select
+  const toggleSplitSelect = (userId) => {
+    setSplitSelectedIds(prev => {
+      if (prev.includes(userId)) return prev.filter(id => id !== userId);
+      return [...prev, userId];
+    });
+  };
+
+  // Trigger split request creation
+  const handleConfirmSplit = async () => {
+    // selected must exclude current user
+    if (!currentUser) {
+      Alert.alert('Not logged in');
+      return;
+    }
+    if (!splitSelectedIds || splitSelectedIds.length === 0) {
+      Alert.alert('Select people', 'Please select at least one person to split with.');
+      return;
+    }
+    const total = parseFloat(splitAmountInput);
+    if (isNaN(total) || total <= 0) {
+      Alert.alert('Invalid amount', 'Enter a positive amount for the bill.');
+      return;
+    }
+
+    // convert total to integer cents
+    const total_cents = Math.round(total * 100);
+
+    // compute split
+    const totalPeople = splitSelectedIds.length + 1; // +1 payer
+    const base = Math.floor(total_cents / totalPeople);
+    const remainder = total_cents % totalPeople;
+
+    // Build recipient amounts (in cents) - remainder distribution goes to first recipients
+    // Note: since payer paid, we send requests to selected users only (they owe their share)
+    const recipients = splitSelectedIds.map((uid, idx) => {
+      // If payer should get remainder instead, make adjustment here.
+      // We'll distribute remainder among the selected recipients in order.
+      const add = idx < remainder ? 1 : 0;
+      return { user_id: uid, amount_cents: base + add };
+    });
+
+    // Map user ids to ibans
+    const recipientsWithIban = recipients.map(r => {
+      const u = users.find(x => x.id === r.user_id);
+      return { iban: u.iban, name: u.name, amount_cents: r.amount_cents };
+    });
+
+    // Prepare body for server
+    const body = {
+      payer_iban: currentUser.iban,
+      recipients: recipientsWithIban.map(r => ({ iban: r.iban, amount_cents: r.amount_cents })),
+      total_cents
+    };
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/split_request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      
+      // Add this logging
+      const responseText = await response.text();
+      console.log('Split Response Status:', response.status);
+      console.log('Split Response Body:', responseText);
+      
+      // Now try to parse (will fail if HTML, but log shows it)
+      const data = JSON.parse(responseText);  // Use responseText here
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Split request failed');
+      }
+      setMessage(`Split created. Requested ${recipientsWithIban.length} payments.`);
+      // Reset split UI
+      setSplitSelectedIds([]);
+      setSplitAmountInput('30');
+      setCurrentScreen('home');
+      fetchPendingRequests();
+    } catch (error) {
+      console.error('Full split error:', error);  // Also log full error
+      Alert.alert('Split Error', error.message || 'Failed to create split');
+    }
+    setLoading(false);
   };
 
   // Load persisted login
@@ -282,6 +377,37 @@ export default function App() {
     }
   }, [currentUser, currentScreen]);
 
+  // Web polling & visibility handlers (from earlier fix) - keep it for split updates too
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (!currentUser) return;
+
+    console.log('Starting web polling & visibility handlers for pending requests');
+
+    fetchPendingRequests();
+
+    const POLL_MS = 10000;
+    const intervalId = setInterval(() => {
+      fetchPendingRequests();
+    }, POLL_MS);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchPendingRequests();
+      }
+    };
+    const onFocus = () => fetchPendingRequests();
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [currentUser]);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -309,9 +435,31 @@ export default function App() {
         <View style={styles.cell}>
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.label}>{item.phone}</Text>
+          <Text style={styles.smallBalance}>Balance: €{(item.balance_cents/100).toFixed(2)}</Text>
         </View>
         <Text style={[styles.actionText, isSelf && styles.disabledText]}>
           {isSelf ? 'You' : isRequestFlow ? 'Request From' : 'Send To'}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderSplitContact = ({ item }) => {
+    const isSelf = item.id === currentUser?.id;
+    const selected = splitSelectedIds.includes(item.id);
+    return (
+      <TouchableOpacity
+        style={[styles.row, isSelf && styles.disabledRow, selected && styles.splitSelectedRow]}
+        onPress={() => !isSelf && toggleSplitSelect(item.id)}
+        disabled={isSelf}
+        activeOpacity={0.7}
+      >
+        <View style={styles.cell}>
+          <Text style={styles.name}>{item.name}</Text>
+          <Text style={styles.label}>{item.email}</Text>
+        </View>
+        <Text style={[styles.actionText, isSelf && styles.disabledText]}>
+          {isSelf ? 'You' : selected ? 'Selected' : 'Select'}
         </Text>
       </TouchableOpacity>
     );
@@ -321,19 +469,19 @@ export default function App() {
     <View style={styles.requestRow}>
       <View style={styles.requestInfo}>
         <Text style={styles.requestRequester}>{item.requester_name}</Text>
-        <Text style={styles.requestAmount}>${item.amount}</Text>
+        <Text style={styles.requestAmount}>€{(item.amount_cents/100).toFixed(2)}</Text>
         <Text style={styles.requestTime}>{item.created_at}</Text>
       </View>
       <View style={styles.requestButtons}>
         <TouchableOpacity
           style={styles.approveButton}
-          onPress={() => handleApproveRequest(item.id, item.amount, item.requester_name)}
+          onPress={() => handleApproveRequest(item.id, item.amount_cents, item.requester_name)}
         >
           <Text style={styles.approveText}>Approve</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.denyButton}
-          onPress={() => handleDenyRequest(item.id, item.requester_name, item.amount)}
+          onPress={() => handleDenyRequest(item.id, item.requester_name, item.amount_cents)}
         >
           <Text style={styles.denyText}>Deny</Text>
         </TouchableOpacity>
@@ -341,86 +489,60 @@ export default function App() {
     </View>
   );
 
-const handleLogout = async () => {
-  if (!currentUser) return;
-  setLoading(true);
-  try {
-    // Inform backend to remove push token (so device no longer receives pushes)
-    console.log('Logging out user', currentUser.id);
-    try {
-      await fetch(`${API_BASE}/logout/${currentUser.id}`, {
-        method: 'POST',
-      });
-    } catch (err) {
-      console.warn('Logout request to server failed:', err);
-      // continue anyway - local logout still happens
-    }
-
-    // Clear persisted login on device
-    await AsyncStorage.removeItem('currentUserId');
-    setCurrentUser(null);
-    setShowLogin(true);
-    setCurrentScreen('home');
-    setMessage('Logged out.');
-  } catch (error) {
-    console.error('Logout error:', error);
-    Alert.alert('Logout Error', error.message || 'Failed to logout.');
-  }
-  setLoading(false);
-};
-
-// --- HomeScreen: add a Logout button top-right ---
-// Replace your existing HomeScreen component with this updated version:
-
-const HomeScreen = () => {
-  const hasPending = pendingRequests.length > 0;
-  return (
-    <View style={styles.homeContainer}>
-      {/* Logout button top-right */}
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={handleLogout}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.homeTitle}>Welcome, {currentUser?.name}!</Text>
-      <Text style={styles.subtitle}>What would you like to do?</Text>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={() => {
-            setIsRequestFlow(false);
-            setCurrentScreen('contacts');
-          }}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.buttonText}>Send Money</Text>
+  const HomeScreen = () => {
+    const hasPending = pendingRequests.length > 0;
+    return (
+      <View style={styles.homeContainer}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.receiveButton}
-          onPress={() => {
-            setIsRequestFlow(true);
-            setCurrentScreen('contacts');
-          }}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.buttonText}>Request Money</Text>
-        </TouchableOpacity>
+
+        <Text style={styles.homeTitle}>Welcome, {currentUser?.name}!</Text>
+        <Text style={styles.subtitle}>What would you like to do?</Text>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={() => {
+              setIsRequestFlow(false);
+              setCurrentScreen('contacts');
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Send Money</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.receiveButton}
+            onPress={() => {
+              setIsRequestFlow(true);
+              setCurrentScreen('contacts');
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Request Money</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.splitButton}
+            onPress={() => {
+              setSplitSelectedIds([]);
+              setCurrentScreen('split');
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Split Check</Text>
+          </TouchableOpacity>
+        </View>
+        {hasPending && (
+          <TouchableOpacity
+            style={styles.pendingButton}
+            onPress={() => setCurrentScreen('requests')}
+          >
+            <Text style={styles.pendingText}>View {pendingRequests.length} Pending Request{pendingRequests.length > 1 ? 's' : ''}</Text>
+          </TouchableOpacity>
+        )}
+        {message ? <Text style={styles.message}>{message}</Text> : null}
       </View>
-      {hasPending && (
-        <TouchableOpacity
-          style={styles.pendingButton}
-          onPress={() => setCurrentScreen('requests')}
-        >
-          <Text style={styles.pendingText}>View {pendingRequests.length} Pending Request{pendingRequests.length > 1 ? 's' : ''}</Text>
-        </TouchableOpacity>
-      )}
-      {message ? <Text style={styles.message}>{message}</Text> : null}
-    </View>
-  );
-};
+    );
+  };
 
   // Contacts Screen
   const ContactsScreen = () => (
@@ -447,6 +569,47 @@ const HomeScreen = () => {
     </View>
   );
 
+  // Split Screen
+  const SplitScreen = () => (
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => setCurrentScreen('home')}
+      >
+        <Text style={styles.backText}>← Back to Home</Text>
+      </TouchableOpacity>
+      <Text style={styles.title}>Split Check</Text>
+      <Text style={styles.subtitle}>Select people to split with (you are the payer)</Text>
+      <FlatList
+        data={users}
+        renderItem={renderSplitContact}
+        keyExtractor={(item) => item.id.toString()}
+        style={styles.list}
+      />
+      <View style={styles.amountContainer}>
+        <Text style={styles.amountLabel}>Total Bill (€):</Text>
+        <TextInput
+          style={styles.amountInput}
+          value={splitAmountInput}
+          onChangeText={setSplitAmountInput}
+          keyboardType="numeric"
+          placeholder="30.00"
+          placeholderTextColor="#999"
+        />
+      </View>
+      <TouchableOpacity
+        style={[styles.confirmButton, { backgroundColor: '#FF9800' }]}
+        onPress={handleConfirmSplit}
+        disabled={loading}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.confirmButtonText}>Create Split & Request</Text>
+      </TouchableOpacity>
+      {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
+      {message ? <Text style={styles.message}>{message}</Text> : null}
+    </View>
+  );
+
   // Transfer/Request Screen
   const TransferScreen = () => (
     <View style={styles.container}>
@@ -465,7 +628,7 @@ const HomeScreen = () => {
         <Text style={styles.recipientPhone}>{selectedRecipient?.phone}</Text>
       </View>
       <View style={styles.amountContainer}>
-        <Text style={styles.amountLabel}>Amount ($):</Text>
+        <Text style={styles.amountLabel}>Amount (€):</Text>
         <TextInput
           style={styles.amountInput}
           value={amountInput}
@@ -548,6 +711,7 @@ const HomeScreen = () => {
       {!showLogin && currentScreen === 'contacts' && <ContactsScreen />}
       {!showLogin && currentScreen === 'transfer' && <TransferScreen />}
       {!showLogin && currentScreen === 'requests' && <RequestsScreen />}
+      {!showLogin && currentScreen === 'split' && <SplitScreen />}
     </View>
     </ImageBackground>
   );
@@ -592,6 +756,13 @@ const styles = StyleSheet.create({
   },
   receiveButton: {
     backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+    width: 200,
+  },
+  splitButton: {
+    backgroundColor: '#FF9800',
     padding: 15,
     borderRadius: 8,
     width: 200,
@@ -770,6 +941,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  splitSelectedRow: {
+    borderWidth: 2,
+    borderColor: '#FF9800',
+  },
   disabledRow: {
     opacity: 0.5,
     backgroundColor: '#f0f0f0',
@@ -786,6 +961,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#838383ff',
     fontSize: 15,
+  },
+  smallBalance: {
+    marginTop: 6,
+    color: '#444',
   },
   actionText: {
     color: '#61dafb',
@@ -809,7 +988,7 @@ const styles = StyleSheet.create({
   },
   loadingSpinner: {
     marginTop: 10,
-  },  
+  },
   logoutButton: {
     position: 'absolute',
     top: 40,
@@ -824,5 +1003,4 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-
 });
