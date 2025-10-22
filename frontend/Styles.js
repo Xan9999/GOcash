@@ -10,18 +10,17 @@ const styles = StyleSheet.create({
   baseContainer: {
     flex: 1,
   },
-  container: { // Used by default screens
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(223, 255, 223, 0.9)', // Light green tint
+    backgroundColor: 'rgba(223, 255, 223, 0.9)',
   },
-  darkContainer: { // Used by login/home
+  darkContainer: {
     flex: 1,
     backgroundColor: 'rgba(40, 44, 52, 0.5)',
   },
-  // FIXED: Changed dark background to transparent to show main app background
   centeredContainer: { 
     flex: 1,
-    backgroundColor: 'transparent', // Now transparent to show the light main container
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -43,10 +42,10 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   sliderContainer: {
-    flex: 1,
-    paddingHorizontal: 10,
     alignItems: 'stretch',
     justifyContent: 'center',
+    width: '100%',
+    marginTop: 10,
   },
   list: {
     flex: 1,
@@ -178,6 +177,11 @@ const styles = StyleSheet.create({
     color: '#838383ff',
     fontSize: 14,
     marginTop: 3,
+  },
+  amountdetailLabelRight: {
+    fontWeight: 'bold',
+    color: '#000000ff',
+    fontSize: 16,
   },
   contactBalance: {
     marginTop: 6,
@@ -382,13 +386,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   personRow: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     marginHorizontal: 20,
+    paddingHorizontal: 10,
   },
   requestRow: {
     flexDirection: 'row',
