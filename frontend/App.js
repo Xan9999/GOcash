@@ -610,10 +610,10 @@ export default function App() {
     if (Platform.OS !== 'web') return;
     if (!currentUser) return;
 
-    console.log('Starting web polling & visibility handlers for pending requests and transactions');
+  console.log('Starting web polling & visibility handlers for pending requests and transactions');
 
     // Initial fetch based on current screen
-    if (currentScreen === 'requests') {
+    if (currentScreen === 'requests' || currentScreen === 'home') {  // *** ADDED: 'home' ***
       fetchPendingRequests();
     } else if (currentScreen === 'transactions') {
       fetchTransactions();
@@ -622,7 +622,7 @@ export default function App() {
     const POLL_MS = 10000;
     const intervalId = setInterval(() => {
       // Poll conditionally based on current screen
-      if (currentScreen === 'requests') {
+      if (currentScreen === 'requests' || currentScreen === 'home') {  // *** ADDED: 'home' ***
         fetchPendingRequests();
       } else if (currentScreen === 'transactions') {
         fetchTransactions();
@@ -631,7 +631,7 @@ export default function App() {
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        if (currentScreen === 'requests') {
+        if (currentScreen === 'requests' || currentScreen === 'home') {  // *** ADDED: 'home' ***
           fetchPendingRequests();
         } else if (currentScreen === 'transactions') {
           fetchTransactions();
@@ -639,7 +639,7 @@ export default function App() {
       }
     };
     const onFocus = () => {
-      if (currentScreen === 'requests') {
+      if (currentScreen === 'requests' || currentScreen === 'home') {  // *** ADDED: 'home' ***
         fetchPendingRequests();
       } else if (currentScreen === 'transactions') {
         fetchTransactions();
@@ -654,8 +654,7 @@ export default function App() {
       window.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('focus', onFocus);
     };
-  }, [currentUser, currentScreen]);  // Add currentScreen to deps for re-polling on screen change
-
+  }, [currentUser, currentScreen]);  // Already has currentScreen dep
   // Login Renderer
   const loginRenderer = renderLoginUser(styles, handleLogin);
 
