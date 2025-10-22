@@ -457,6 +457,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
   },
+  homeTitle: {
+    fontSize: 60,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly', // evenly space buttons across screen
+    alignItems: 'center',
+    width: '100%',                  // make sure it spans full width
+    paddingHorizontal: 20,          // slight margin from screen edges
+    marginTop: 30,
+  },
+  circleButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#4bd1bbff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  icon: {
+    width: 60,            // adjust size of icons as needed
+    height: 60,
+    // tintColor: '#fff',    // make icons white (optional)
+  },
+    rotatedIcon: {
+    transform: [{ rotate: '180deg' }], // 👈 rotates the image 180°
+  },
+
 });
 
 export default styles;
