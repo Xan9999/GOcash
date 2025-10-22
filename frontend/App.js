@@ -34,7 +34,8 @@ const btnImages = {
   split: require('./assets/group.png'),
   chat: require('./assets/chat.png'),
   chatUnread: require('./assets/chat-unread.png'),
-
+  history: require('./assets/history.png'),
+  logout: require('./assets/logout.png'),
 };
 
   export default function App() {

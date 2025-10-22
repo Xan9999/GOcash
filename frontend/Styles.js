@@ -47,6 +47,17 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 10,
   },
+  footerContainer: {
+    position: 'absolute',
+    bottom: 40, // lift it slightly above screen edge
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    paddingHorizontal: 0,
+  },
+
   list: {
     flex: 1,
     paddingHorizontal: 10,
