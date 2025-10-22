@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Slider from '@react-native-community/slider';
 import {
   View,
   Text,
@@ -32,10 +33,10 @@ export default function App() {
   // For split
   const [splitSelectedIds, setSplitSelectedIds] = useState([]); // array of user ids selected
   const [splitAmountInput, setSplitAmountInput] = useState('30'); // total bill in euros
+  const [shares, setShares] = useState([]);  // Array of % (0-100) for each selected user, index matches splitSelectedIds
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
-  console.log('Project ID:', projectId);  // Debug
   const API_BASE = 'http://192.168.0.109:5000';
 
   // Notification setup (mobile only, with token registration after login)
@@ -270,15 +271,48 @@ export default function App() {
     });
   };
 
-  // Trigger split request creation
-  const handleConfirmSplit = async () => {
-    // selected must exclude current user
-    if (!currentUser) {
-      Alert.alert('Not logged in');
+  const handleConfirmSelection = () => {
+    if (splitSelectedIds.length === 0) {
+      Alert.alert('Select people', 'Please select at least one person to split with.');
       return;
     }
-    if (!splitSelectedIds || splitSelectedIds.length === 0) {
-      Alert.alert('Select people', 'Please select at least one person to split with.');
+    const numOthers = splitSelectedIds.length;
+    const equalPercent = 100 / numOthers;  // e.g., 33.33 for 3 people
+    setShares(Array(numOthers).fill(equalPercent));  // Init equal %
+    setSplitAmountInput('30');
+    setCurrentScreen('split_confirm');
+    setMessage('');
+  };
+
+  const handleShareChange = (index, newPercent) => {
+    const newShares = [...shares];
+    newShares[index] = Math.max(0, Math.min(100, newPercent));
+    setShares(newShares);  // Safe: memoized amounts handle € updates
+  };
+
+  const handleExactInput = (index, text) => {
+    const num = parseFloat(text) || 0;
+    handleShareChange(index, num);
+  };
+
+  const equalizeShares = () => {
+    if (shares.length === 0) return;
+    const equalPercent = 100 / shares.length;
+    setShares(Array(shares.length).fill(equalPercent));
+  };
+
+  const memoizedAmounts = useMemo(() => {
+    const total = parseFloat(splitAmountInput) || 0;
+    return splitSelectedIds.map((id, idx) => {
+      const percent = shares[idx] || 0;
+      return ((percent / 100) * total);
+    });
+  }, [splitSelectedIds, shares, splitAmountInput]);  // Only re-run if these change
+
+  // Trigger split request creation
+  const handleConfirmSplit = async () => {
+    if (!currentUser) {
+      Alert.alert('Not logged in');
       return;
     }
     const total = parseFloat(splitAmountInput);
@@ -287,30 +321,24 @@ export default function App() {
       return;
     }
 
-    // convert total to integer cents
+    // Normalize shares to sum=100 if not exact (scale proportionally)
+    const totalPercent = shares.reduce((sum, p) => sum + p, 0);
+    const normalizedShares = shares.map(p => (p / totalPercent) * 100);  // Now sums to 100
+
+    // Convert to cents amounts
     const total_cents = Math.round(total * 100);
-
-    // compute split
-    const totalPeople = splitSelectedIds.length + 1; // +1 payer
-    const base = Math.floor(total_cents / totalPeople);
-    const remainder = total_cents % totalPeople;
-
-    // Build recipient amounts (in cents) - remainder distribution goes to first recipients
-    // Note: since payer paid, we send requests to selected users only (they owe their share)
     const recipients = splitSelectedIds.map((uid, idx) => {
-      // If payer should get remainder instead, make adjustment here.
-      // We'll distribute remainder among the selected recipients in order.
-      const add = idx < remainder ? 1 : 0;
-      return { user_id: uid, amount_cents: base + add };
+      const percent = normalizedShares[idx];
+      const amount_cents = Math.round((percent / 100) * total_cents);
+      return { user_id: uid, amount_cents };
     });
 
-    // Map user ids to ibans
+    // Map to IBANs (same as before)
     const recipientsWithIban = recipients.map(r => {
       const u = users.find(x => x.id === r.user_id);
       return { iban: u.iban, name: u.name, amount_cents: r.amount_cents };
     });
 
-    // Prepare body for server
     const body = {
       payer_iban: currentUser.iban,
       recipients: recipientsWithIban.map(r => ({ iban: r.iban, amount_cents: r.amount_cents })),
@@ -324,31 +352,23 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      
-      // Add this logging
-      const responseText = await response.text();
-      console.log('Split Response Status:', response.status);
-      console.log('Split Response Body:', responseText);
-      
-      // Now try to parse (will fail if HTML, but log shows it)
-      const data = JSON.parse(responseText);  // Use responseText here
-      
+      const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || 'Split request failed');
       }
-      setMessage(`Split created. Requested ${recipientsWithIban.length} payments.`);
-      // Reset split UI
+      setMessage(`Split created. Requested ${recipientsWithIban.length} unequal payments totaling €${total.toFixed(2)}.`);
+      // Reset
       setSplitSelectedIds([]);
+      setShares([]);
       setSplitAmountInput('30');
       setCurrentScreen('home');
       fetchPendingRequests();
     } catch (error) {
-      console.error('Full split error:', error);  // Also log full error
+      console.error('Split error:', error);
       Alert.alert('Split Error', error.message || 'Failed to create split');
     }
     setLoading(false);
   };
-
   // Load persisted login
   useEffect(() => {
     const loadUser = async () => {
@@ -524,6 +544,7 @@ export default function App() {
             style={styles.splitButton}
             onPress={() => {
               setSplitSelectedIds([]);
+              setShares([]);  // Reset shares
               setCurrentScreen('split');
             }}
             activeOpacity={0.7}
@@ -574,7 +595,11 @@ export default function App() {
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => setCurrentScreen('home')}
+        onPress={() => {
+          setSplitSelectedIds([]);  // Clear on back
+          setShares([]);  // Reset shares
+          setCurrentScreen('home');
+        }}
       >
         <Text style={styles.backText}>← Back to Home</Text>
       </TouchableOpacity>
@@ -586,29 +611,172 @@ export default function App() {
         keyExtractor={(item) => item.id.toString()}
         style={styles.list}
       />
-      <View style={styles.amountContainer}>
-        <Text style={styles.amountLabel}>Total Bill (€):</Text>
-        <TextInput
-          style={styles.amountInput}
-          value={splitAmountInput}
-          onChangeText={setSplitAmountInput}
-          keyboardType="numeric"
-          placeholder="30.00"
-          placeholderTextColor="#999"
-        />
-      </View>
       <TouchableOpacity
-        style={[styles.confirmButton, { backgroundColor: '#FF9800' }]}
-        onPress={handleConfirmSplit}
-        disabled={loading}
+        style={[
+          styles.confirmButton, 
+          { 
+            backgroundColor: splitSelectedIds.length > 0 ? '#FF9800' : '#ccc',
+            marginTop: 20 
+          }
+        ]}
+        onPress={handleConfirmSelection}
+        disabled={splitSelectedIds.length === 0}
         activeOpacity={0.7}
       >
-        <Text style={styles.confirmButtonText}>Create Split & Request</Text>
+        <Text style={styles.confirmButtonText}>
+          Confirm Selection ({splitSelectedIds.length} selected)
+        </Text>
       </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
-      {message ? <Text style={styles.message}>{message}</Text> : null}
     </View>
   );
+
+
+  // Split Confirm Screen (amount entry + sliders for % shares)
+  const SplitConfirmScreen = () => {
+    if (splitSelectedIds.length === 0) {
+      setCurrentScreen('split');
+      return null;
+    }
+
+    const total = parseFloat(splitAmountInput) || 0;
+    const totalPercent = shares.reduce((sum, p) => sum + p, 0);
+    const isExact = Math.abs(totalPercent - 100) < 0.01;
+
+    // Use memoized amounts for live € without re-renders
+    const selectedUsersWithAmounts = useMemo(() => 
+      splitSelectedIds.map((id, idx) => ({
+        ...users.find(u => u.id === id),
+        isUser: false,
+        percent: shares[idx] || 0,
+        amount: memoizedAmounts[idx] || 0
+      })).filter(Boolean),
+    [splitSelectedIds, users, memoizedAmounts, shares]);
+
+    const totalOwed = selectedUsersWithAmounts.reduce((sum, u) => sum + u.amount, 0);
+    const yourNet = total - totalOwed;
+
+    const allPeople = useMemo(() => [
+      { 
+        name: currentUser.name, 
+        isUser: true, 
+        percent: 100, 
+        amount: total,
+        net: yourNet
+      },
+      ...selectedUsersWithAmounts
+    ], [currentUser.name, total, yourNet, selectedUsersWithAmounts]);
+
+    // Fixed height for getItemLayout (prevents jumpy re-renders)
+    const getItemLayout = (data, index) => ({
+      length: 120,  // Approx row height (adjust if needed)
+      offset: 120 * index,
+      index,
+    });
+
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => setCurrentScreen('split')}
+        >
+          <Text style={styles.backText}>← Back to Selection</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Confirm Split</Text>
+        <Text style={styles.subtitle}>Enter total bill and adjust shares</Text>
+
+        {/* Total Input - Stable typing */}
+        <View style={styles.amountContainer}>
+          <Text style={styles.amountLabel}>Total Bill (€):</Text>
+          <TextInput
+            style={styles.amountInput}
+            value={splitAmountInput}
+            onChangeText={setSplitAmountInput}
+            keyboardType="decimal-pad"
+            placeholder="30.00"
+            placeholderTextColor="#999"
+            selectTextOnFocus={false}  // No auto-highlight on focus
+            contextMenuHidden={true}   // No menu/focus steal
+            autoFocus={true}
+            blurOnSubmit={false}       // Keep focus after enter
+          />
+        </View>
+
+        {/* Equalize Button */}
+        <TouchableOpacity
+          style={[styles.sendButton, { width: '80%', alignSelf: 'center', marginBottom: 10 }]}
+          onPress={equalizeShares}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>Equal Split</Text>
+        </TouchableOpacity>
+
+        {/* Optimized FlatList - No flicker, live € */}
+        <Text style={[styles.subtitle, { marginTop: 10, marginBottom: 10 }]}>Share Preview:</Text>
+        <FlatList
+          data={allPeople}
+          keyExtractor={(item, index) => (item.id || index).toString()}
+          getItemLayout={getItemLayout}              // Fixed layout, no jumps
+          initialNumToRender={allPeople.length}      // Render all at once
+          maxToRenderPerBatch={allPeople.length}     // Batch all
+          windowSize={10}                            // Small window for perf
+          removeClippedSubviews={false}              // No clipping flicker
+          renderItem={({ item, index }) => (
+            <View style={styles.shareRow}>
+              <View style={styles.cell}>
+                <Text style={[
+                  styles.name, 
+                  item.isUser && { fontSize: 26, fontWeight: '800' }
+                ]}>
+                  {item.name}
+                </Text>
+                <Text 
+                  style={[styles.label, { marginTop: 5 }]} 
+                  selectable={false}  // Explicit no-focus/select
+                >
+                  {item.isUser 
+                    ? `Net Receive: €${item.net.toFixed(2)}` 
+                    : `Pays €${item.amount.toFixed(2)}`
+                  }
+                </Text>
+              </View>
+              {!item.isUser && (
+                <View style={styles.sliderContainer}>
+                  <Slider
+                    style={styles.slider}
+                    minimumValue={0}
+                    maximumValue={100}
+                    value={item.percent}
+                    onValueChange={(value) => handleShareChange(index - 1, value)}  // Live during drag
+                    minimumTrackTintColor="#FF9800"
+                    maximumTrackTintColor="#ddd"
+                    thumbTintColor="#FF9800"
+                    step={1}
+                    tapOffset={10}  // Precise touch without interference
+                  />
+                </View>
+              )}
+            </View>
+          )}
+          style={{ flex: 1 }}
+        />
+
+        <TouchableOpacity
+          style={[
+            styles.confirmButton, 
+            { backgroundColor: isExact ? '#4CAF50' : '#FF9800' }
+          ]}
+          onPress={handleConfirmSplit}
+          disabled={loading || total <= 0}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.confirmButtonText}>Create Split Requests</Text>
+        </TouchableOpacity>
+        {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
+        {message ? <Text style={styles.message}>{message}</Text> : null}
+      </View>
+    );
+  };
 
   // Transfer/Request Screen
   const TransferScreen = () => (
@@ -712,6 +880,7 @@ export default function App() {
       {!showLogin && currentScreen === 'transfer' && <TransferScreen />}
       {!showLogin && currentScreen === 'requests' && <RequestsScreen />}
       {!showLogin && currentScreen === 'split' && <SplitScreen />}
+      {!showLogin && currentScreen === 'split_confirm' && <SplitConfirmScreen />}
     </View>
     </ImageBackground>
   );
@@ -961,6 +1130,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#838383ff',
     fontSize: 15,
+    marginTop: 5,
   },
   smallBalance: {
     marginTop: 6,
@@ -1002,5 +1172,45 @@ const styles = StyleSheet.create({
   logoutText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  previewRow: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  shareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    marginVertical: 8,
+    padding: 15,
+    borderRadius: 8,
+  },
+  sliderContainer: {
+    alignItems: 'center',
+    width: 150,
+    marginLeft: 20,
+  },
+  slider: {
+    width: 120,
+    height: 40,
+  },
+  percentLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FF9800',
+    marginTop: 5,
+  },
+  summaryContainer: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  summaryText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#282c34',
+    textAlign: 'center',
+    marginVertical: 2,
   },
 });
