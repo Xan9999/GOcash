@@ -1,5 +1,5 @@
 import React, { useState, memo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, Image } from 'react-native';
 import styles from '../Styles';
 
 const GroupCreationScreen = ({
@@ -44,10 +44,10 @@ const GroupCreationScreen = ({
         onPress={() => setCurrentScreen('split')}
         activeOpacity={0.7}
       >
-        <Text style={styles.backText}>← Back to Selection</Text>
+        <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
       
-      <Text style={styles.title}>Create New Group</Text>
+      <Text style={styles.title}>Ustvari skupino</Text>
       
       {/* Group Name Input */}
       <View style={styles.inputContainer}>
@@ -85,7 +85,7 @@ const GroupCreationScreen = ({
           disabled={loading || splitSelectedIds.length === 0 || !groupName.trim()}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Split & Create Group</Text>
+          <Text style={styles.buttonText}>Razdeli račun in ustvari skupino</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -94,7 +94,7 @@ const GroupCreationScreen = ({
           disabled={loading || splitSelectedIds.length === 0 || !groupName.trim()}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Save Group</Text>
+          <Text style={styles.buttonText}>Shrani skupino</Text>
         </TouchableOpacity>
       </View>
       

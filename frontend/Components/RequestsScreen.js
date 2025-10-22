@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
 import styles from '../Styles';
 import { renderPendingRequest } from './Renderers';
 
@@ -18,9 +18,9 @@ const RequestsScreen = ({
         onPress={() => setCurrentScreen('home')}
         activeOpacity={0.7}
       >
-        <Text style={styles.backText}>← Back to Home</Text>
+        <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
-      <Text style={styles.title}>Pending Requests</Text>
+      <Text style={styles.title}>Zahteve</Text>
       <FlatList
         data={pendingRequests}
         renderItem={requestRenderer}

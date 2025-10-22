@@ -10,6 +10,36 @@ const styles = StyleSheet.create({
   baseContainer: {
     flex: 1,
   },
+  container_splitconfirm_buttons: {
+    flexDirection: 'row',
+    padding: 20,
+    height: 80,
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: Platform.OS === 'web' ? 10 : 30
+  },
+  splitconfirm_button: {
+    backgroundColor: 'green',
+    width: '49%',
+    height: '100%',
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,  
+  },
+    splitButton: {
+    backgroundColor: 'green',
+    width: '49%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+  },
   container: {
     flex: 1,
     backgroundColor: 'rgba(234, 255, 234, 0.9)',
@@ -66,8 +96,8 @@ const styles = StyleSheet.create({
   splitSelectionFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 20,
-    backgroundColor: 'rgba(71, 82, 108, 0.95)',
+    paddingLeft: 20,
+    paddingRight: 20,
     position: 'absolute',
     alignItems: 'center',
     bottom: 0,
@@ -86,7 +116,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#16d125ff',
+    color: 'green',
     textAlign: 'center',
     marginBottom: 20,
     marginTop: Platform.OS === 'web' ? 50 : 80,
@@ -220,6 +250,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontSize: 18,
     color: '#000',
+    textAlign: 'center', 
+  },
+  amountContainer: {
+    alignSelf: 'center',
+  },
+  amountdetailLabel: {
+    fontWeight: 'bold',
+    alignSelf: 'center',
   },
   amountInput: {
     backgroundColor: 'white',
@@ -261,7 +299,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#61dafb',
   },
   confirmButton: {
-    backgroundColor: '#61dafb',
+    backgroundColor: 'green',
     padding: 15,
     borderRadius: 8,
     height: '100%',
@@ -272,9 +310,7 @@ const styles = StyleSheet.create({
   receiveButton: {
     backgroundColor: '#4CAF50',
   },
-  splitButton: {
-    backgroundColor: '#FF9800',
-  },
+
   // UPDATED: Thinner border and transparent background
   historyButton: {
     backgroundColor: 'transparent',

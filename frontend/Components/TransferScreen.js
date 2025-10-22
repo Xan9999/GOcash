@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Image } from 'react-native';
 import styles from '../Styles';
 
 const TransferScreen = ({
@@ -29,11 +29,11 @@ const TransferScreen = ({
       }}
       activeOpacity={0.7}
     >
-      <Text style={styles.backText}>← Nazaj na kontakte</Text>
+      <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
     </TouchableOpacity>
     <Text style={styles.title}>
       {isRequestFlow ? 
-        `Request from ${selectedRecipient?.name}` : 
+        `Zahtevaj od: ${selectedRecipient?.name}` : 
         `Send to ${selectedRecipient?.name}`
       }
     </Text>
@@ -60,10 +60,7 @@ const TransferScreen = ({
       />
     </View>
     <TouchableOpacity
-      style={[
-        styles.confirmButton,
-        { backgroundColor: isRequestFlow ? '#4CAF50' : '#61dafb' }
-      ]}
+      style={[styles.confirmButton, { width: '100%', marginTop: 30, height: 50 }]}
       onPress={handleConfirmTransfer}
       disabled={loading}
       activeOpacity={0.7}

@@ -175,7 +175,7 @@ const btnImages = {
         throw new Error(data.error || 'Failed to create group');
       }
       
-      setMessage(`Group '${groupName}' created successfully!`);
+      // setMessage(`Group '${groupName}' created successfully!`);
       fetchGroups(currentUser.id); // Refresh group list
       
       if (redirectToSplitConfirm) {
@@ -259,7 +259,7 @@ const btnImages = {
       setCurrentUser(user);
       setShowLogin(false);
       // Removed notification warning for web since it's now handled by platform check
-      setMessage(`Logged in as ${user.name}${Platform.OS === 'web' ? ' (Web: Notifications disabled)' : ''}`); 
+      // setMessage(`Logged in as ${user.name}${Platform.OS === 'web' ? ' (Web: Notifications disabled)' : ''}`); 
       console.log('Login success, hiding modal');
       fetchUsers();
       fetchGroups(user.id); // Fetch groups after successful login
@@ -304,12 +304,12 @@ const btnImages = {
 
   const handleConfirmTransfer = async () => {
     if (!selectedRecipient || !amountInput) {
-      setMessage('Please select a recipient and enter an amount.');
+      // setMessage('Please select a recipient and enter an amount.');
       return;
     }
     const amountCents = Math.round(parseFloat(amountInput) * 100);
     if (amountCents <= 0) {
-      setMessage('Amount must be positive.');
+      // setMessage('Amount must be positive.');
       return;
     }
     setLoading(true);
@@ -343,9 +343,9 @@ const btnImages = {
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
       const data = await response.json();
-      setMessage(
-        `Success: ${isRequestFlow ? 'Request sent' : 'Money sent'} for €${amountInput}!`
-      );
+      // setMessage(
+      //   `Success: ${isRequestFlow ? 'Request sent' : 'Money sent'} for €${amountInput}!`
+      // );
       setSelectedRecipient(null);
       setAmountInput('10');
       setCurrentScreen('home');  // Back to home after action
@@ -368,7 +368,7 @@ const btnImages = {
       });
       if (!response.ok) throw new Error('Failed to approve');
       const data = await response.json();
-      setMessage(`Approved request! Sent €${(amount_cents/100).toFixed(2)} to ${requesterName}.`);
+      // setMessage(`Approved request! Sent €${(amount_cents/100).toFixed(2)} to ${requesterName}.`);
       
       const remainingCount = await fetchPendingRequests(); // Fetch and get new count
       fetchUsers(); // Update balances
@@ -390,7 +390,7 @@ const btnImages = {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to deny');
-      setMessage(`Denied request from ${requesterName} for €${(amount_cents/100).toFixed(2)}.`);
+       // setMessage(`Denied request from ${requesterName} for €${(amount_cents/100).toFixed(2)}.`);
       
       const remainingCount = await fetchPendingRequests(); // Fetch and get new count
 
@@ -547,7 +547,7 @@ const btnImages = {
       if (!response.ok) {
         throw new Error(data.error || 'Split request failed');
       }
-      setMessage(`Split created. Requested ${recipientsWithIban.length} payments totaling €${total.toFixed(2)}.`);
+      // setMessage(`Split created. Requested ${recipientsWithIban.length} payments totaling €${total.toFixed(2)}.`);
       // Reset
       setSplitSelectedIds([]);
       setShares([]);
@@ -695,8 +695,8 @@ const btnImages = {
       <View style={styles.container}>
         <Modal visible={showLogin} animationType="slide" transparent>
           <View style={styles.darkContainer}>
-            <Text style={styles.title}>Login to Payment App</Text>
-            <Text style={styles.subtitle}>Select your account:</Text>
+            <Text style={styles.title}>Vpišite se v Flik 2</Text>
+            <Text style={styles.subtitle}>Izberite račun:</Text>
             <FlatList
               data={users}
               renderItem={loginRenderer}

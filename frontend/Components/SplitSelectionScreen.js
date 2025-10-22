@@ -87,7 +87,7 @@ const SplitSelectionScreen = ({
       >
         <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
-      <Text style={styles.title}>Split a Check</Text>
+      <Text style={styles.title}>Razdeli plačilo</Text>
       <View style={styles.splitSelectHeader}>
         <Text style={styles.splitSelectTitle}>Izberi ljudi ali skupino</Text>
         <Text style={styles.splitSelectCount}>
@@ -117,7 +117,7 @@ const SplitSelectionScreen = ({
           disabled={splitSelectedIds.length === 0}
           activeOpacity={0.7}
         >
-          <Text style={styles.confirmButtonText}>Potrdi </Text>
+          <Text style={styles.confirmButtonText}>Potrdi</Text>
         </TouchableOpacity>
         
         {/* NEW: Group Creation Button */}
