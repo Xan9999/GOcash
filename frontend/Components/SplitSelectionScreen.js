@@ -114,7 +114,7 @@ const SplitSelectionScreen = ({
             splitSelectedIds.length === 0 && styles.confirmButtonDisabled,
             styles.splitConfirmButton
           ]}
-          onPress={handleConfirmSelection}
+          onPress={() => handleConfirmSelection(splitSelectedIds)}
           disabled={splitSelectedIds.length === 0}
           activeOpacity={0.7}
         >

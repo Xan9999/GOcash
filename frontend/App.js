@@ -404,16 +404,24 @@ export default function App() {
   };
 
   // Updated to take optional memberIds (used when selecting a group)
-  const handleConfirmSelection = (memberIdsToConfirm = splitSelectedIds) => {
-    if (memberIdsToConfirm.length === 0) {
-      Alert.alert('Select people', 'Please select at least one person to split with.');
+  const handleConfirmSelection = (memberIdsToConfirm) => {
+    const numSelected = memberIdsToConfirm.length; // Total people involved in split
+
+    setShares([]);
+    setUserSharePercent(0);
+
+    if (numSelected === 0) {
+      setMessage('Please select at least one recipient to split the amount.');
       return;
     }
-    // Set initial WEIGHT for all to 50 for a middle starting point
-    const initialWeight = 50;
-    setShares(Array(memberIdsToConfirm.length).fill(initialWeight));
-    setUserSharePercent(initialWeight); 
-    setSplitAmountInput('30');
+
+    const defaultShare = 50;
+    const otherMemberIds = memberIdsToConfirm.filter(id => id !== currentUser.id);
+    setUserSharePercent(defaultShare); 
+    const newShares = otherMemberIds.map(() => defaultShare);
+    setShares(newShares);
+
+    
     setCurrentScreen('split_confirm');
     setMessage('');
   };
