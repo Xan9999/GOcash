@@ -20,33 +20,33 @@ const HomeScreen = ({
         <Text style={styles.buttonText}>Logout</Text>
       </TouchableOpacity>
 
-      <Text style={styles.homeTitle}>Welcome, {currentUser?.name}!</Text>
-      <Text style={styles.subtitle}>What would you like to do?</Text>
+      <Text style={styles.homeTitle}>Flik 2</Text>
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={styles.sendButton}
+          style={[styles.circleButton]}
           onPress={() => {
             setIsRequestFlow(false);
             setCurrentScreen('contacts');
           }}
           activeOpacity={0.7}
         >
-          <Image source={btnImages.send} style={styles.image} resizeMode="contain" />
-          <Text style={styles.buttonText}>Send Money</Text>
+          <Image source={btnImages.send} style={styles.icon} resizeMode="contain" />
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.receiveButton}
+          style={[styles.circleButton]}
           onPress={() => {
             setIsRequestFlow(true);
             setCurrentScreen('contacts');
           }}
           activeOpacity={0.7}
         >
-          <Image source={btnImages.request} style={styles.image} resizeMode="contain"  />
-          <Text style={styles.buttonText}>Request Money</Text>
+          <Image source={btnImages.request} style={styles.icon} resizeMode="contain" />
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.splitButton}
+          style={[styles.circleButton]}
           onPress={() => {
             setSplitSelectedIds([]);
             setShares([]);
@@ -54,10 +54,10 @@ const HomeScreen = ({
           }}
           activeOpacity={0.7}
         >
-          <Image source={btnImages.split} style={styles.image} resizeMode="contain" />
-          <Text style={styles.buttonText}>Split Check</Text>
+          <Image source={btnImages.split} style={styles.icon} resizeMode="contain" />
         </TouchableOpacity>
       </View>
+
       <TouchableOpacity
         style={[styles.historyButton, { marginTop: 10 }]}
         onPress={() => setCurrentScreen('transactions')}

@@ -61,7 +61,7 @@ const btnImages = {
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
-  const API_BASE = 'http://192.168.0.115:5000'; // Keep this here as it's logic/config
+  const API_BASE = 'http://192.168.0.109:5000'; // Keep this here as it's logic/config
 
   // Notification setup (mobile only, with token registration after login)
   useEffect(() => {
