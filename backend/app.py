@@ -526,33 +526,34 @@ def split_request():
 @app.route('/groups', methods=['GET'])
 def get_groups():
     try:
-        creator_id = request.args.get('creator_id', type=int)
-        if not creator_id:
-            return jsonify({'error': 'creator_id is required'}), 400
+        user_id = request.args.get('creator_id', type=int) 
+        
+        user_id = request.args.get('user_id', type=int) or request.args.get('creator_id', type=int)
+
+        if not user_id:
+            return jsonify({'error': 'user_id or creator_id is required'}), 400
 
         conn = db_connect()
-        cursor = conn.cursor()
-        
-        # Fetch groups where the current user is the creator
+        cursor = conn.cursor()        
         cursor.execute('''
-            SELECT id, name, member_ids FROM groups WHERE creator_id = ?
+            SELECT id, name, creator_id, member_ids FROM groups
             ORDER BY created_at DESC
-        ''', (creator_id,))
+        ''')
         
         groups_list = []
-        for id, name, member_ids_json in cursor.fetchall():
+        for id, name, creator_id, member_ids_json in cursor.fetchall():
             try:
-                # Deserialize the JSON string back into a list of member IDs
                 member_ids = json.loads(member_ids_json)
             except json.JSONDecodeError:
-                member_ids = [] # Default to empty if invalid JSON
-            
-            groups_list.append({
-                'id': id,
-                'name': name,
-                'creator_id': creator_id,
-                'member_ids': member_ids # List of integer IDs
-            })
+                member_ids = []
+
+            if creator_id == user_id or user_id in member_ids:
+                groups_list.append({
+                    'id': id,
+                    'name': name,
+                    'creator_id': creator_id,
+                    'member_ids': member_ids
+                })
             
         conn.close()
         return jsonify(groups_list)

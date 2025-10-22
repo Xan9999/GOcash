@@ -548,6 +548,12 @@ export default function App() {
     }
   }, [currentUser]);
 
+  useEffect(() => {
+    if (currentUser && currentScreen === 'split') {
+      fetchGroups(currentUser.id);
+    }
+  }, [currentUser, currentScreen]);
+  
   // Refresh pending requests when on home screen
   useEffect(() => {
     if (currentUser && currentScreen === 'home') {

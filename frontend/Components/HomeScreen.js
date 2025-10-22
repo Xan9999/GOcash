@@ -15,7 +15,7 @@ const HomeScreen = ({
   return (
     <View style={styles.homeContainer}>
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
-        <Text style={styles.logoutText}>Logout</Text>
+        <Text style={styles.buttonText}>Logout</Text>
       </TouchableOpacity>
 
       <Text style={styles.homeTitle}>Welcome, {currentUser?.name}!</Text>
