@@ -526,42 +526,60 @@ def split_request():
 @app.route('/groups', methods=['GET'])
 def get_groups():
     try:
-        user_id = request.args.get('creator_id', type=int) 
-        
-        user_id = request.args.get('user_id', type=int) or request.args.get('creator_id', type=int)
+        user_id = request.args.get('user_id', type=int) 
 
         if not user_id:
-            return jsonify({'error': 'user_id or creator_id is required'}), 400
+            return jsonify({'error': 'user_id is required'}), 400
 
         conn = db_connect()
-        cursor = conn.cursor()        
-        cursor.execute('''
-            SELECT id, name, creator_id, member_ids FROM groups
-            ORDER BY created_at DESC
-        ''')
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            f'''
+            SELECT 
+                g.id, 
+                g.name, 
+                g.creator_id, 
+                g.member_ids,
+                g.created_at  -- *** ADDED ***
+            FROM groups g
+            WHERE g.creator_id = ? 
+            
+            UNION 
+            
+            SELECT 
+                g.id, 
+                g.name, 
+                g.creator_id, 
+                g.member_ids,
+                g.created_at  -- *** ADDED ***
+            FROM groups g, json_each(g.member_ids)
+            WHERE json_each.value = ? 
+            
+            ORDER BY created_at DESC; -- This now correctly refers to the selected column
+            ''', (user_id, user_id)
+        )
         
         groups_list = []
-        for id, name, creator_id, member_ids_json in cursor.fetchall():
+        for id, name, creator_id, member_ids_json, _ in cursor.fetchall(): 
             try:
                 member_ids = json.loads(member_ids_json)
             except json.JSONDecodeError:
                 member_ids = []
-
-            if creator_id == user_id or user_id in member_ids:
-                groups_list.append({
-                    'id': id,
-                    'name': name,
-                    'creator_id': creator_id,
-                    'member_ids': member_ids
-                })
+            
+            groups_list.append({
+                'id': id,
+                'name': name,
+                'creator_id': creator_id,
+                'member_ids': member_ids
+            })
             
         conn.close()
         return jsonify(groups_list)
     except Exception as e:
         print(f"Fetch groups error: {e}")
         return jsonify({'error': str(e)}), 500
-
-
+    
 @app.route('/groups', methods=['POST'])
 def create_group():
     try:

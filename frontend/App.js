@@ -130,14 +130,13 @@ export default function App() {
     if (!userId) return;
     console.log('Fetching groups...');
     try {
-      const response = await fetch(`${API_BASE}/groups?creator_id=${userId}`);
+      const response = await fetch(`${API_BASE}/groups?user_id=${userId}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch groups`);
       const data = await response.json();
       setGroups(data);
       console.log('Groups fetched:', data.length);
     } catch (error) {
       console.error('Fetch groups error:', error);
-      // setMessage('Error fetching groups.'); // Keep screen clean
     }
   };
   
@@ -553,7 +552,7 @@ export default function App() {
       fetchGroups(currentUser.id);
     }
   }, [currentUser, currentScreen]);
-  
+
   // Refresh pending requests when on home screen
   useEffect(() => {
     if (currentUser && currentScreen === 'home') {
