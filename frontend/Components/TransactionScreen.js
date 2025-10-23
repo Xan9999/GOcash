@@ -29,51 +29,23 @@ const formatTransaction = (transaction, currentUserId) => {
       }
       break;
     case 'request_sent':
-      mainText = `Prošnja za: ${otherPartyName}`;
+      if (isInitiator) { // Sent money
+        mainText = `Prošnja za: ${otherPartyName}`;
+      } else { // Received money
+        mainText = `Prošnja od: ${otherPartyName}`;
+      }
       if (isCompleted) {  // *** NEW: Handle approved (completed) ***
         mainText += ' (Potrjena)';
-        color = '#2ecc71'; // Green: received money
-        amountText = `+€${transaction.amount.toFixed(2)}`;  // *** NEW: Show + for inflow ***
+        color = (!isInitiator) ? '#e74c3c' : '#2ecc71';
+        if (isInitiator)
+          amountText = `-€${transaction.amount.toFixed(2)}`;  // *** NEW: Show - for outflow ***
+        else
+          amountText = `+€${transaction.amount.toFixed(2)}`;  // *** NEW: Show + for inflow ***
       } else if (isRejected) {
         mainText += ' (Zavrnjena)';
-        color = '#e74c3c';  // *** CHANGED: Red for denied (was orange) ***
-        amountText = '';  // *** NEW: No amount on denied ***
+        color = '#34495e';
       } else {
         color = '#f39c12'; // Orange for pending
-      }
-      break;
-    case 'request_received':
-      mainText = `Prošnja od: ${otherPartyName}`;
-      if (isCompleted) {  // *** NEW: Handle paid (completed) ***
-        mainText += ' (Plačana)';
-        color = '#e74c3c'; // Red: paid out
-        amountText = `-€${transaction.amount.toFixed(2)}`;  // *** NEW: Show - for outflow ***
-      } else if (isRejected) {
-        mainText += ' (Zavrnjena)';
-        color = '#34495e';  // *** CHANGED: Neutral for denied (was red) ***
-        amountText = '';  // *** NEW: No amount on denied ***
-      } else {
-        color = '#f39c12'; // Orange for pending
-      }
-      break;
-    case 'request_approved':
-      if (isInitiator) { // Approved a request (Paid out)
-        mainText = `Za: ${otherPartyName} (Prošnja potrjena)`;
-        color = isRejected ? '#e74c3c' : '#e74c3c'; // Red for out-flow
-      } else { // Was requested from and received money (Approved)
-        mainText = `Od: ${otherPartyName} (Prošnja potrjena)`;
-        color = isRejected ? '#34495e' : '#2ecc71'; // Green for in-flow
-      }
-      break;
-    case 'request_denied':
-      if (isInitiator) { // Denied a request
-        mainText = `Zavrnjena prošnja od: ${otherPartyName}`;
-        color = isRejected ? '#e74c3c' : '#34495e'; // Darker color for denied action
-        amountText = ''; // Denied requests don't involve money movement
-      } else { // Request to user was denied
-        mainText = `Zavrnjena prošnja za: ${otherPartyName}`;
-        color = isRejected ? '#e74c3c' : '#34495e'; // Darker color
-        amountText = '';
       }
       break;
     case 'split_sent':

@@ -137,10 +137,10 @@ const btnImages = {
       const data = await response.json();
       setUsers(data);
       console.log('Users fetched:', data.length);
-      setMessage('');
+      //setMessage('');
     } catch (error) {
       console.error('Fetch error:', error);
-      setMessage('Error fetching users! Check backend & IP.');
+      //setMessage('Error fetching users! Check backend & IP.');
       Alert.alert('Error', error.message);
     }
     setLoading(false);
@@ -215,9 +215,7 @@ const btnImages = {
       const response = await fetch(`${API_BASE}/pending_requests?user_id=${currentUser.id}`);
       if (!response.ok) throw new Error('Failed to fetch requests');
       const data = await response.json();
-      console.log('Raw pending requests response:', JSON.stringify(data, null, 2));
       setPendingRequests(data);
-      console.log('Pending requests updated:', data.length);
       return data.length;
     } catch (error) {
       console.error('Requests fetch error:', error);
@@ -236,7 +234,7 @@ const btnImages = {
       console.log('Transactions fetched:', data.length);
     } catch (error) {
       console.error('Fetch transactions error:', error);
-      setMessage('Error fetching transactions!');
+      //setMessage('Error fetching transactions!');
       Alert.alert('Error', error.message);
     }
     setRefreshingTransactions(false);
@@ -276,7 +274,7 @@ const btnImages = {
     } catch (error) {
       console.error('Full login error:', error);
       Alert.alert('Login Error', error.message);
-      setMessage('Login failed—check console.');
+      //setMessage('Login failed—check console.');
     }
     setLoading(false);
   };
@@ -296,7 +294,7 @@ const btnImages = {
       setShowLogin(true);
       setCurrentScreen('home');
       setGroups([]); // Clear groups on logout
-      setMessage('Logged out.');
+      //setMessage('Logged out.');
     } catch (error) {
       console.error('Logout error:', error);
       Alert.alert('Logout Error', error.message || 'Failed to logout.');
@@ -308,7 +306,7 @@ const btnImages = {
     setSelectedRecipient(recipient);
     setAmountInput(''); // Reset amount
     setCurrentScreen('transfer');
-    setMessage(''); // Clear message
+    //setMessage(''); // Clear message
   };
 
   const handleConfirmTransfer = async () => {
@@ -395,7 +393,7 @@ const btnImages = {
       }
       await fetchPendingRequests();
       await fetchTransactions();
-      setMessage('Zahteva odobrena in plačana!');
+      //setMessage('Zahteva odobrena in plačana!');
     } catch (error) {
       console.error('Approve error:', error);
       Alert.alert('Napaka', error.message);
@@ -422,7 +420,7 @@ const btnImages = {
         throw new Error(errorMsg);
       }
       await fetchPendingRequests();
-      setMessage('Zahteva zavrnjena.');
+      //setMessage('Zahteva zavrnjena.');
     } catch (error) {
       console.error('Deny error:', error);
       Alert.alert('Napaka', error.message);
