@@ -18,7 +18,6 @@ const HomeScreen = ({
 
   return (
     <View style={styles.centeredContainer}>
-      {/* QR Scan Button - Top Right */}
       <TouchableOpacity
         style={styles.topRightButton}
         onPress={() => console.log('Scan QR button pressed - does nothing yet')}
@@ -70,8 +69,11 @@ const HomeScreen = ({
       </View>
 
       <View style={styles.footerContainer}>
-        <TouchableOpacity onPress={handleLogout}>
-          <Image source={btnImages.logout} style={styles.headerIcon} resizeMode="contain" />
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => setCurrentScreen('transactions')}
+        >
+          <Image source={btnImages.history} style={styles.headerIcon} resizeMode="contain" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -82,11 +84,8 @@ const HomeScreen = ({
           <Image source={chatIconSource} style={styles.headerIcon} resizeMode="contain" />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => setCurrentScreen('transactions')}
-        >
-          <Image source={btnImages.history} style={styles.headerIcon} resizeMode="contain" />
+        <TouchableOpacity onPress={handleLogout}>
+          <Image source={btnImages.logout} style={[styles.headerIcon, {left: 3}]} resizeMode="contain" />
         </TouchableOpacity>
       </View>
     </View>

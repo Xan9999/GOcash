@@ -202,8 +202,9 @@ const btnImages = {
 
   const handleGroupSelection = (memberIds) => {
     // Select all members of the group and go to split confirm screen
-    setSplitSelectedIds(memberIds);
-    handleConfirmSelection(memberIds); // Use the new signature
+    const otherMemberIds = memberIds.filter(id => id !== currentUser.id);
+    setSplitSelectedIds(otherMemberIds);
+    handleConfirmSelection(otherMemberIds); // Use the new signature
   };
 
   const fetchPendingRequests = async () => {
@@ -433,7 +434,7 @@ const btnImages = {
     }
 
     const defaultShare = 50;
-    const otherMemberIds = memberIdsToConfirm.filter(id => id !== currentUser.id);
+    const otherMemberIds = memberIdsToConfirm
     setUserSharePercent(defaultShare); 
     const newShares = otherMemberIds.map(() => defaultShare);
     setShares(newShares);

@@ -100,7 +100,7 @@ const SplitConfirmScreen = ({
           value={splitAmountInput}
           onChangeText={setSplitAmountInput}
           keyboardType="decimal-pad"
-          placeholder="30.00"
+          placeholder="10"
           placeholderTextColor="#999"
           selectTextOnFocus={false}
           contextMenuHidden={true}
@@ -108,7 +108,6 @@ const SplitConfirmScreen = ({
           keyboardShouldPersistTaps="always"
           autoFocus={true}
           returnKeyType="done"
-          
         />
       </View>
 
