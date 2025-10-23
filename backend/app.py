@@ -569,7 +569,7 @@ def split_request():
         payer_id, payer_name = cursor.fetchone()
         
         # Insert split_sent transaction log
-        memo = f"Razdeli račun €{total_cents / 100:.2f}"
+        memo = f"Razdeli račun {total_cents / 100:.2f}€"
         cursor.execute('''
             INSERT INTO transactions (type, initiator_id, amount_cents, status, memo)
             VALUES ('split_sent', ?, ?, 'completed', ?)

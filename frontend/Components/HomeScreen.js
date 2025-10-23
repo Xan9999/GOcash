@@ -25,14 +25,14 @@ const HomeScreen = ({
       >
         <Image
           source={btnImages.scan}
-          style={styles.headerIcon}
+          style={[styles.headerIcon, {width: 50, height: 50, left: 5, bottom: 5}]}
           resizeMode="contain"
         />
       </TouchableOpacity>
 
-      <Text style={styles.homeTitle}>Flik 2</Text>
+      <Image source={require('../assets/flik-logo.png')} style={styles.logoIcon} />
 
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer,  { marginBottom: 60 }]}>
         <TouchableOpacity
           style={[styles.circleButton]}
           onPress={() => {

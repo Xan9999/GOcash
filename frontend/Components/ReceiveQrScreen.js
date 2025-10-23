@@ -174,7 +174,7 @@ const ReceiveQrScreen = ({
 
       {!showQr && (
         <>          
-          <View style={styles.amountContainer}>
+          <View style={[styles.amountContainer, { marginBottom: 30, marginTop: 20 }]}>
             <Text style={styles.amountdetailLabel}>Znesek (€):</Text>
             <TextInput
               style={styles.amountInput}

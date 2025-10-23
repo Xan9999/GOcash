@@ -205,14 +205,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     padding: 10,
   },
-  actionText: {
-    color: '#61dafb',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  disabledText: {
-    color: '#999',
-  },
   name: {
     fontWeight: 'bold',
     color: '#000000ff',
@@ -228,12 +220,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000000ff',
     fontSize: 16,
-  },
-  contactBalance: {
-    marginTop: 6,
-    color: '#007AFF',
-    fontWeight: 'bold',
-    fontSize: 14,
   },
   groupRowText: {
     fontWeight: 'bold',
@@ -469,6 +455,11 @@ const styles = StyleSheet.create({
     width: '80%',
     height: '80%',
   },
+  logoIcon: {
+    width: 240, // Smaller than circle button icons
+    height: 240,
+  },
+
   icon: {
     width: 40,
     height: 40,
