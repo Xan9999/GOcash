@@ -60,7 +60,7 @@ const TransferScreen = ({
       />
     </View>
     <TouchableOpacity
-      style={[styles.confirmButton, { width: '100%', marginTop: 30, height: 50 }]}
+      style={[styles.confirmButton, {alignSelf:'center', width: '30%', marginTop: 30, height: 50 }]}
       onPress={handleConfirmTransfer}
       disabled={loading}
       activeOpacity={0.7}
