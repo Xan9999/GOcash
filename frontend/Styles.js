@@ -49,6 +49,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     alignSelf: 'center',
   },
+  denyRequestButton: {
+    backgroundColor: 'transparent',
+    color: 'green',
+    padding: 10,
+    alignContent: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    height: 50,
+    borderWidth: 3,
+    borderColor: 'green',
+    width: '49%',
+
+  },
   confirmRequestButton: {
     backgroundColor: 'green',
     padding: 10,

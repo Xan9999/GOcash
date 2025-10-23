@@ -122,9 +122,8 @@ const SplitSelectionScreen = ({
         
         {/* NEW: Group Creation Button */}
         <TouchableOpacity
-          style={[
-            styles.groupCreateButton,
-          ]}
+          style={
+            styles.groupCreateButton}
           onPress={() => setCurrentScreen('group_create')}
           activeOpacity={0.7}
         >

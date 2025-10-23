@@ -71,12 +71,12 @@ const RequestDetailScreen = ({
           )}
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.confirmRequestButton}
+          style={styles.denyRequestButton}
           onPress={handleReject}
           disabled={loading}
           activeOpacity={0.7}
         >
-          <Text style={styles.confirmRequestButtonText}>Zavrni</Text>
+          <Text style={[styles.confirmRequestButtonText, {color: 'green'}]}>Zavrni</Text>
         </TouchableOpacity>
       </View>
     </View>
