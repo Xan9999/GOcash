@@ -25,7 +25,7 @@ const HomeScreen = ({
       >
         <Image
           source={btnImages.scan}
-          style={styles.headerIcon}
+          style={[styles.headerIcon, {width: 50, height: 50, left: 5, bottom: 5}]}
           resizeMode="contain"
         />
       </TouchableOpacity>
