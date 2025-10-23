@@ -18,9 +18,7 @@ const RequestsScreen = ({
     >
       <View style={styles.cell}>
         <View style={styles.requestInfo}>
-          <Text style={styles.requestRequester}>
-            {item.requester_phone}
-          </Text>
+
           <Text style={styles.requestRequester}>
             {item.requester_name}
           </Text>
