@@ -11,7 +11,6 @@ const formatTransaction = (transaction, currentUserId) => {
   let mainText = 'Activity Log';
   let amountText = transaction.amount ? `€${transaction.amount.toFixed(2)}` : '';
   let color = '#333';
-  let icon = '📝'; // Default
 
   // Determine the primary user/party involved
   const otherPartyName = isInitiator 
@@ -22,78 +21,65 @@ const formatTransaction = (transaction, currentUserId) => {
   switch (transaction.type) {
     case 'transfer':
       if (isInitiator) { // Sent money
-        mainText = `Sent to ${otherPartyName}`;
+        mainText = `Za: ${otherPartyName}`;
         color = isRejected ? '#e74c3c' : '#e74c3c'; // Red for out-flow
-        icon = '💸';
       } else { // Received money
-        mainText = `Received from ${otherPartyName}`;
+        mainText = `Od: ${otherPartyName}`;
         color = isRejected ? '#34495e' : '#2ecc71'; // Green for in-flow
-        icon = '💰';
       }
       break;
     case 'request_sent':
-      mainText = `Prošnja za ${otherPartyName}`;
+      mainText = `Prošnja za: ${otherPartyName}`;
       if (isCompleted) {  // *** NEW: Handle approved (completed) ***
         mainText += ' (Potrjena)';
         color = '#2ecc71'; // Green: received money
-        icon = '✅';
         amountText = `+€${transaction.amount.toFixed(2)}`;  // *** NEW: Show + for inflow ***
       } else if (isRejected) {
         mainText += ' (Zavrnjena)';
         color = '#e74c3c';  // *** CHANGED: Red for denied (was orange) ***
-        icon = '❌';  // *** NEW: Better icon for denied ***
         amountText = '';  // *** NEW: No amount on denied ***
       } else {
         color = '#f39c12'; // Orange for pending
-        icon = '👉';
       }
       break;
     case 'request_received':
-      mainText = `Prošnja od ${otherPartyName}`;
+      mainText = `Prošnja od: ${otherPartyName}`;
       if (isCompleted) {  // *** NEW: Handle paid (completed) ***
         mainText += ' (Plačana)';
         color = '#e74c3c'; // Red: paid out
-        icon = '✅';
         amountText = `-€${transaction.amount.toFixed(2)}`;  // *** NEW: Show - for outflow ***
       } else if (isRejected) {
         mainText += ' (Zavrnjena)';
         color = '#34495e';  // *** CHANGED: Neutral for denied (was red) ***
-        icon = '❌';  // *** NEW: Better icon for denied ***
         amountText = '';  // *** NEW: No amount on denied ***
       } else {
         color = '#f39c12'; // Orange for pending
-        icon = '👈';
       }
       break;
     case 'request_approved':
       if (isInitiator) { // Approved a request (Paid out)
-        mainText = `Paid to ${otherPartyName} (Request Approved)`;
+        mainText = `Za: ${otherPartyName} (Prošnja potrjena)`;
         color = isRejected ? '#e74c3c' : '#e74c3c'; // Red for out-flow
-        icon = '✅';
       } else { // Was requested from and received money (Approved)
-        mainText = `Received from ${otherPartyName} (Request Approved)`;
+        mainText = `Od: ${otherPartyName} (Prošnja potrjena)`;
         color = isRejected ? '#34495e' : '#2ecc71'; // Green for in-flow
-        icon = '✅';
       }
       break;
     case 'request_denied':
       if (isInitiator) { // Denied a request
-        mainText = `Zavrnjena prošnja od ${otherPartyName}`;
+        mainText = `Zavrnjena prošnja od: ${otherPartyName}`;
         color = isRejected ? '#e74c3c' : '#34495e'; // Darker color for denied action
-        icon = '🚫';
         amountText = ''; // Denied requests don't involve money movement
       } else { // Request to user was denied
-        mainText = `Prošnja za ${otherPartyName} zavrnjena`;
+        mainText = `Zavrnjena prošnja za: ${otherPartyName}`;
         color = isRejected ? '#e74c3c' : '#34495e'; // Darker color
-        icon = '❌';
         amountText = '';
       }
       break;
     case 'split_sent':
       // Simplified log for split initiation
-      mainText = `Ustvarjeno razdeljevanje računa`;
+      mainText = `Ustvarjeno razdeljevanje računa:`;
       color = isRejected ? '#e74c3c' : '#34495e';
-      icon = '👥';
       amountText = ''; // Split sends multiple requests, not one amount
       break;
     default:
@@ -108,7 +94,6 @@ const formatTransaction = (transaction, currentUserId) => {
     display_text: mainText, 
     display_amount: amountText, 
     display_color: color,
-    display_icon: icon
   };
 };
 
@@ -123,7 +108,7 @@ const TransactionItem = ({ item }) => (
       </Text>
       {item.memo ? (
         <Text style={styles.transactionMemo} numberOfLines={1}>
-          Opis: {item.memo}
+          Opis: {item.memo} 
         </Text>
       ) : null}
       <Text style={styles.transactionDate}>
@@ -132,7 +117,7 @@ const TransactionItem = ({ item }) => (
     </View>
     <View style={styles.transactionAmountContainer}>
     {item.display_amount ? (
-        <Text style={[styles.transactionAmount, { color: item.display_color }]}>
+        <Text style={styles.transactionAmount}>
         {item.display_amount}
         </Text>
     ) : null}  {/* Render nothing if no amount (avoids empty text node) */}
