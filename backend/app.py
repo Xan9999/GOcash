@@ -400,11 +400,7 @@ def transfer_money():
             INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, memo)
             VALUES ('transfer', ?, ?, ?, 'completed', ?)
         ''', (sender_id, receiver_id, amount_cents, memo))
-        cursor.execute('''
-            INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, memo)
-            VALUES ('transfer', ?, ?, ?, 'completed', ?)
-        ''', (receiver_id, sender_id, amount_cents, memo))
-
+        
         conn.commit()
 
         # Notify receiver
