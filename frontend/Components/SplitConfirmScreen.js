@@ -105,7 +105,6 @@ const SplitConfirmScreen = ({
             value={splitAmountInput}
             onChangeText={setSplitAmountInput}
             keyboardType="decimal-pad"
-            placeholder="10"
             placeholderTextColor="#999"
             selectTextOnFocus={false}
             contextMenuHidden={true}
