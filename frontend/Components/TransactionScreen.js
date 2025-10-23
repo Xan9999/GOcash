@@ -120,7 +120,7 @@ const TransactionItem = ({ item }) => (
         <Text style={styles.transactionAmount}>
         {item.display_amount}
         </Text>
-    ) : null}  {/* Render nothing if no amount (avoids empty text node) */}
+    ) : null}
     </View>
   </View>
 );
