@@ -24,7 +24,7 @@ const RequestDetailScreen = ({
     );
   }
 
-  const amount = (selectedRequest.amount / 100).toFixed(2);
+  const amount = (selectedRequest.amount).toFixed(2);
   const handlePay = async () => {
     await handleApproveRequest(selectedRequest);
     setCurrentScreen('requests');
@@ -44,14 +44,20 @@ const RequestDetailScreen = ({
       >
         <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
-      <Text style={styles.title}>Zahteva od {selectedRequest.requester_name}</Text>
+      
+      <Image source={require('../assets/user-icon.png')} style={styles.userIcon} />
+      <View style={styles.recipientInfo}>
+      <Text style={styles.recipientPhone}>{selectedRequest.phone}</Text>
+      </View>  
+      
+      <Text style={styles.title}>Zahteva od: {selectedRequest.requester_name}</Text>
       <View style={styles.transferDetails}>
-        <Text style={styles.transferLabel}>Znesek:</Text>
+        <Text style={styles.amountdetailLabel}>Znesek(€):</Text>
         <Text style={styles.transferAmount}>€{amount}</Text>
       </View>
-      <View style={styles.buttonContainer}>
+      <View style={styles.requestButtonContainer}>
         <TouchableOpacity
-          style={[styles.confirmButton, styles.payButton]}
+          style={styles.confirmRequestButton }
           onPress={handlePay}
           disabled={loading}
           activeOpacity={0.7}
@@ -59,16 +65,16 @@ const RequestDetailScreen = ({
           {loading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.confirmButtonText}>Plačaj</Text>
+            <Text style={styles.confirmRequestButtonText}>Plačaj</Text>
           )}
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.confirmButton, styles.rejectButton]}
+          style={styles.confirmRequestButton}
           onPress={handleReject}
           disabled={loading}
           activeOpacity={0.7}
         >
-          <Text style={styles.confirmButtonText}>Zavrni</Text>
+          <Text style={styles.confirmRequestButtonText}>Zavrni</Text>
         </TouchableOpacity>
       </View>
     </View>

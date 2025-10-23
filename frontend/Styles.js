@@ -23,6 +23,15 @@ const styles = StyleSheet.create({
     right: 0,
     paddingBottom: Platform.OS === 'web' ? 10 : 30
   },
+  requestButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    position: 'absolute',
+    padding: 20,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
   splitconfirm_button: {
     position: 'relative',
     backgroundColor: 'green',
@@ -33,6 +42,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,    
     borderRadius: 8,  
+  },
+  confirmRequestButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    alignSelf: 'center',
+  },
+  confirmRequestButton: {
+    backgroundColor: 'green',
+    padding: 10,
+    alignContent: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    height: 50,
+    width: '49%',
   },
   container: {
     flex: 1,
@@ -50,7 +74,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
@@ -305,6 +329,17 @@ const styles = StyleSheet.create({
   },
   receiveButton: {
     backgroundColor: 'green',
+  },
+  transferAmount: {    
+    backgroundColor: 'transparent',  // No white background
+    paddingTop: 15,
+    paddingBottom: 2,
+    paddingHorizontal: 0,
+    borderBottomColor: '#000',       // Black underline
+    fontSize: 24,
+    color: '#000',                    // Text color
+    textAlign: 'center',              // Horizontally center text
+    textAlignVertical: 'center',      // Vertically center text (Android only)
   },
 
   // UPDATED: Thinner border and transparent background

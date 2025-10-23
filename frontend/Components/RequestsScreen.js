@@ -9,16 +9,26 @@ const RequestsScreen = ({
 }) => {
   const renderRequestItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.pendingRequestItem}
+      style={styles.requestRow} // NEW: Use card-like style similar to personRow
       onPress={() => {
         setSelectedRequest(item);
         setCurrentScreen('request_detail');
       }}
       activeOpacity={0.7}
     >
-      <Text style={styles.pendingRequestText}>
-        {item.requester_name}: €{(item.amount / 100).toFixed(2)}
-      </Text>
+      <View style={styles.cell}>
+        <View style={styles.requestInfo}>
+          <Text style={styles.requestRequester}>
+            {item.requester_name}
+          </Text>
+          <Text style={styles.requestAmount}>
+            €{(item.amount).toFixed(2)}
+          </Text>
+        </View>
+        <Text style={styles.requestTime}>
+          {new Date(item.created_at + "Z").toLocaleString('sl-SI', {timeZone: 'Europe/Ljubljana'})}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -44,4 +54,4 @@ const RequestsScreen = ({
   );
 };
 
-export default RequestsScreen;
+export default RequestsScreen;  
