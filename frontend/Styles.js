@@ -81,6 +81,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 50,
   },
+  transactionAmountContainer: {
+    justifyContent: 'right',
+    flex: 1,
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'right',
+  },
 
   list: {
     flex: 1,
