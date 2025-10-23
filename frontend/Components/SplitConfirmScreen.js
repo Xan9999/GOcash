@@ -97,8 +97,8 @@ const SplitConfirmScreen = ({
         <Text style={styles.amountdetailLabel}>Skupaj plačilo (€):</Text>
         <TextInput
           style={styles.amountInput}
-          value={amountInput}
-          onChangeText={setAmountInput}
+          value={splitAmountInput}
+          onChangeText={setSplitAmountInput}
           keyboardType="decimal-pad"
           placeholder="10"
           placeholderTextColor="#999"
@@ -108,7 +108,6 @@ const SplitConfirmScreen = ({
           keyboardShouldPersistTaps="always"
           autoFocus={true}
           returnKeyType="done"
-          onSubmitEditing={handleConfirmTransfer}
         />
       </View>
 

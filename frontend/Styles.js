@@ -261,7 +261,8 @@ const styles = StyleSheet.create({
   },
   amountInput: {
     backgroundColor: 'transparent',  // No white background
-    paddingVertical: 10,
+    paddingTop: 15,
+    paddingBottom: 2,
     paddingHorizontal: 0,
     borderBottomWidth: 1,            // Thin underline
     borderBottomColor: '#000',       // Black underline
