@@ -285,6 +285,7 @@ const styles = StyleSheet.create({
   amountdetailLabel: {
     fontWeight: 'bold',
     alignSelf: 'center',
+    top: -10,
   },
   amountInput: {
     backgroundColor: 'transparent',  // No white background
@@ -345,8 +346,6 @@ const styles = StyleSheet.create({
   },
   transferAmount: {    
     backgroundColor: 'transparent',  // No white background
-    paddingTop: 15,
-    paddingBottom: 2,
     paddingHorizontal: 0,
     borderBottomColor: '#000',       // Black underline
     fontSize: 24,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView  } from 'react-native';
 import styles from '../Styles';
 
 const RequestDetailScreen = ({
@@ -35,7 +35,13 @@ const RequestDetailScreen = ({
     setCurrentScreen('requests');
   };
 
-  return (
+  return ( 
+    <ScrollView 
+    style={styles.container} 
+    keyboardShouldPersistTaps="always" 
+    contentContainerStyle={{ paddingHorizontal: 20, flexGrow: 1 }}
+    // The key ensures React treats this ScrollView as a consistent element,
+    key="transfer-scroll" >
     <View style={styles.container}>
     <TouchableOpacity
         style={styles.backButton}
@@ -52,11 +58,12 @@ const RequestDetailScreen = ({
         {selectedRequest.requester_phone}
       </Text>      
     </View>
-    </View>  
+      
       <View style={styles.transferDetails}>
         <Text style={styles.amountdetailLabel}>Znesek(€):</Text>
         <Text style={styles.transferAmount}>€{amount}</Text>
       </View>
+      <View style={{padding: 20, top: 50} }>
       <View style={styles.requestButtonContainer}>
         <TouchableOpacity
           style={styles.confirmRequestButton }
@@ -77,9 +84,13 @@ const RequestDetailScreen = ({
           activeOpacity={0.7}
         >
           <Text style={[styles.confirmRequestButtonText, {color: 'green'}]}>Zavrni</Text>
+        
         </TouchableOpacity>
+        </View>
       </View>
     </View>
+    </View>
+  </ScrollView>
   );
 };
 
