@@ -260,12 +260,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   amountInput: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: 'transparent',  // No white background
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,            // Thin underline
+    borderBottomColor: '#000',       // Black underline
     fontSize: 24,
-    color: '#000000ff',
+    color: '#000',                    // Text color
+    textAlign: 'center',              // Horizontally center text
+    textAlignVertical: 'center',      // Vertically center text (Android only)
   },
+
   textInputDisplay: {
     backgroundColor: '#f9f9f9',
     padding: 15,
@@ -474,6 +479,13 @@ const styles = StyleSheet.create({
     height: 40,
     tintColor: '#006400', // DarkGreen to match the Flik 2 title
   },
+  userIcon: {
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginTop: 10, // reduced space below the icon
+  },
   button_group_Icon: {
     resizeMode: 'contain',
     width: 22, // Smaller than circle button icons
@@ -497,12 +509,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   recipientInfo: {
-    backgroundColor: 'white',
-    padding: 20,
+    paddingBottom: 20,
     borderRadius: 10,
     marginHorizontal: 20,
     marginBottom: 20,
+    alignItems: 'center', // centers children horizontally
   },
+
+  recipientName: {
+    fontSize: 24,       // big text
+    fontWeight: 'bold', // bold
+    textAlign: 'center',
+    marginBottom: 5,    // space between name and phone
+  },
+
+  recipientPhone: {
+    fontSize: 24,       // same size as name
+    fontWeight: 'normal', // not bold
+    textAlign: 'center',
+  },
+
+
   userInfo: {
     flex: 1,
   },

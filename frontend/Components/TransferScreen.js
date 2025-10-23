@@ -33,10 +33,11 @@ const TransferScreen = ({
     </TouchableOpacity>
     <Text style={styles.title}>
       {isRequestFlow ? 
-        `Zahtevaj od: ${selectedRecipient?.name}` : 
-        `Send to ${selectedRecipient?.name}`
+        `Zahteva za plačilo` : 
+        `Nakaži denar`
       }
     </Text>
+    <Image source={require('../assets/user-icon.png')} style={styles.userIcon} />
     <View style={styles.recipientInfo}>
       <Text style={styles.recipientName}>{selectedRecipient?.name}</Text>
       <Text style={styles.recipientPhone}>{selectedRecipient?.phone}</Text>
