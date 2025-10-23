@@ -169,7 +169,7 @@ const ReceiveQrScreen = ({
       </TouchableOpacity>
 
       <Text style={[styles.title, { marginTop: titleMarginTop }]}>
-        {showQr ? 'QR Koda je aktivna' : 'Ustvari QR Kodo za Prejem'}
+        {showQr ? 'QR Koda je aktivna' : 'Ustvari QR kodo za Zahtevek'}
       </Text>
 
       {!showQr && (
@@ -202,7 +202,7 @@ const ReceiveQrScreen = ({
         <TouchableOpacity
           style={[
             styles.confirmButton,
-            { backgroundColor: 'green', alignSelf: 'center', height:40, top:10 } // Green for Receive/Request
+            { backgroundColor: 'green', alignSelf: 'center', height:60} // Green for Receive/Request
           ]}
           onPress={handleGenerateQr}
           activeOpacity={0.7}
