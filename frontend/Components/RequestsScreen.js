@@ -5,11 +5,12 @@ import styles from '../Styles';
 const RequestsScreen = ({
   pendingRequests,
   setCurrentScreen,
-  setSelectedRequest
+  setSelectedRequest,
+  
 }) => {
   const renderRequestItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.requestRow} // NEW: Use card-like style similar to personRow
+      style={styles.requestRow} 
       onPress={() => {
         setSelectedRequest(item);
         setCurrentScreen('request_detail');

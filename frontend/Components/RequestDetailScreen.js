@@ -37,20 +37,22 @@ const RequestDetailScreen = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
+    <TouchableOpacity
         style={styles.backButton}
         onPress={() => setCurrentScreen('requests')}
         activeOpacity={0.7}
       >
         <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
-      
-      <Image source={require('../assets/user-icon.png')} style={styles.userIcon} />
-      <View style={styles.recipientInfo}>
-      <Text style={styles.recipientPhone}>{selectedRequest.phone}</Text>
-      </View>  
-      
+    <View style>
+    <View style={styles.recipientInfo}>
       <Text style={styles.title}>Zahteva od: {selectedRequest.requester_name}</Text>
+      <Image source={require('../assets/user-icon.png')} style={styles.userIcon} />
+      <Text style={styles.recipientPhone}>
+        {selectedRequest.requester_phone}
+      </Text>      
+    </View>
+    </View>  
       <View style={styles.transferDetails}>
         <Text style={styles.amountdetailLabel}>Znesek(€):</Text>
         <Text style={styles.transferAmount}>€{amount}</Text>
