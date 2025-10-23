@@ -108,7 +108,7 @@ const TransactionItem = ({ item }) => (
       </Text>
       {item.memo ? (
         <Text style={styles.transactionMemo} numberOfLines={1}>
-          Opis: {item.memo}
+          Opis: {item.memo} 
         </Text>
       ) : null}
       <Text style={styles.transactionDate}>
