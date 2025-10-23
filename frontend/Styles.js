@@ -460,6 +460,11 @@ const styles = StyleSheet.create({
     width: '80%',
     height: '80%',
   },
+  logoIcon: {
+    width: 240, // Smaller than circle button icons
+    height: 240,
+  },
+
   icon: {
     width: 40,
     height: 40,

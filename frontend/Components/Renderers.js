@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import TestScreen from './Requests';
 import styles from '../Styles';
 
 // Renderer for the initial login screen user list
@@ -60,7 +59,6 @@ export const renderPendingRequest = (styles, onApprove, onDeny, setCurrentScreen
     <TouchableOpacity
       style={styles.requestRow}
       activeOpacity={0.7}
-      onPress={() => setCurrentScreen('test', { requestId: item.id, amount: item.amount })}
     >
       <View style={styles.requestInfo}>
         <Text style={styles.requestRequester}>
