@@ -124,8 +124,6 @@ const SplitSelectionScreen = ({
         <TouchableOpacity
           style={[
             styles.groupCreateButton,
-            // Allow group creation even if no one is selected, but warn later.
-            // splitSelectedIds.length === 0 && styles.confirmButtonDisabled
           ]}
           onPress={() => setCurrentScreen('group_create')}
           activeOpacity={0.7}

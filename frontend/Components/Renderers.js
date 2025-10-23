@@ -73,7 +73,7 @@ export const renderPendingRequest = (styles, onApprove, onDeny, setCurrentScreen
       </View>
       <View style={styles.requestActions}>
         <TouchableOpacity
-          style={[styles.approveButton, { backgroundColor: '#4CAF50', right: 100, position: 'absolute' }]}
+          style={[styles.approveButton, { backgroundColor: 'green', right: 100, position: 'absolute' }]}
           onPress={() => onApprove(item.id, item.amount * 100)} // Pass cents back
           activeOpacity={0.7}
         >

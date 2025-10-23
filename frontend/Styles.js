@@ -157,9 +157,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  historyButtonText: {
-    color: '#4CAF50',
+  emptyButtonText: {
+    color: 'green',
     textAlign: 'center',
+    textAlignVertical: 'center',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'green',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -286,7 +287,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: 'green',
-    padding: 15,
+    padding: 10,
     borderRadius: 8,
     height: 50,
     width: '66%',
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   receiveButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'green',
   },
 
   // UPDATED: Thinner border and transparent background
@@ -304,7 +305,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     borderWidth: 1, // Thinner border
-    borderColor: '#4CAF50',
+    borderColor: 'green',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   approveButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'green',
     padding: 10,
     borderRadius: 5,
     marginLeft: 10,
@@ -465,7 +466,7 @@ const styles = StyleSheet.create({
   headerIcon: {
     width: 40, // Smaller than circle button icons
     height: 40,
-    tintColor: '#006400', // DarkGreen to match the Flik 2 title
+    tintColor: 'green', // DarkGreen to match the Flik 2 title
   },
   userIcon: {
     width: 100,
@@ -478,7 +479,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     width: 22, // Smaller than circle button icons
     height: 22,
-    tintColor: '#006400', // DarkGreen to match the Flik 2 title
+    tintColor: 'green', // DarkGreen to match the Flik 2 title
   },
 
   loadingSpinner: {
@@ -535,7 +536,7 @@ const styles = StyleSheet.create({
   },
   requestAmount: {
     fontSize: 16,
-    color: '#4CAF50',
+    color: 'green',
     fontWeight: 'bold',
     marginTop: 5,
   },
@@ -559,7 +560,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'black',
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: 'green',
   },
   splitSelectCount: {
     fontSize: 14,

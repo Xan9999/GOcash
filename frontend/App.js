@@ -463,7 +463,7 @@ const btnImages = {
   const equalizeShares = () => {
     const numOthers = splitSelectedIds.length;
     if (numOthers === 0) return;
-    const equalWeight = 100 / (numOthers + 1);
+    const equalWeight = 50;
     setUserSharePercent(equalWeight);
     setShares(Array(numOthers).fill(equalWeight));
   };

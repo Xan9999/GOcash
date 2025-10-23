@@ -168,21 +168,21 @@ const SplitConfirmScreen = ({
         <View style={styles.container_splitconfirm_buttons}>  
           <TouchableOpacity
             style={styles.splitconfirm_button}
-            onPress={equalizeShares}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.confirmButtonText, {alignSelf: 'center', position: 'absolute', right: '20%'}]}>Razdeli</Text>
-            <Image source={require('../assets/equalsplit.png')} style={[styles.icon, {alignSelf: 'center', position: 'absolute', left: '20%'}]} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.splitconfirm_button}
             onPress={handleConfirmSplit}
-            disabled={loading || total <= 0 || totalWeight === 0}
             activeOpacity={0.7}
           >
             <Text style={[styles.confirmButtonText, {alignSelf: 'center', position: 'absolute', right: '20%'}]}>Pošlji</Text>
             <Image source={require('../assets/money.png')} style={[styles.icon, {alignSelf: 'center', position: 'absolute', left: '20%'}]} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.splitconfirm_button, { backgroundColor: 'transparent', borderWidth: 3, borderColor: 'green'}]}
+            onPress={equalizeShares}
+            disabled={loading || total <= 0 || totalWeight === 0}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.confirmButtonText, {alignSelf: 'center', position: 'absolute', right: '20%', color: 'green'}]}>Razdeli</Text>
+            <Image source={require('../assets/equalsplit.png')} style={[styles.headerIcon, {alignSelf: 'center', position: 'absolute', left: '20%'}]} />
           </TouchableOpacity>
         </View>
       </View>

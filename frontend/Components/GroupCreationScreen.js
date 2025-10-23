@@ -80,7 +80,7 @@ const GroupCreationScreen = ({
       {/* Action Buttons */}
       <View style={styles.groupCreateActions}>
         <TouchableOpacity
-          style={[styles.confirmButton, { backgroundColor: '#4CAF50', flex: 2 }]}
+          style={[styles.confirmButton, { backgroundColor: 'green', flex: 2 }]}
           onPress={() => handleCreate(true)}
           disabled={loading || splitSelectedIds.length === 0 || !groupName.trim()}
           activeOpacity={0.7}
@@ -89,12 +89,12 @@ const GroupCreationScreen = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.confirmButton, { backgroundColor: '#61dafb', flex: 1, marginLeft: 10 }]}
+          style={[styles.confirmButton, { flex: 1, marginLeft: 10, backgroundColor: 'transparent', borderWidth: 3, borderColor: 'green' }]}
           onPress={() => handleCreate(false)}
           disabled={loading || splitSelectedIds.length === 0 || !groupName.trim()}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Shrani</Text>
+          <Text style={styles.emptyButtonText}>Shrani</Text>
         </TouchableOpacity>
       </View>
       

@@ -72,7 +72,7 @@ const CountdownCircle = memo(({ timeLeft, totalTime, isActive }) => {
           cx={RADIUS}
           cy={RADIUS}
           r={strokeRadius}
-          stroke="#4CAF50"
+          stroke="green"
           strokeWidth={BORDER_WIDTH}
           fill="transparent"
           strokeLinecap="round"
