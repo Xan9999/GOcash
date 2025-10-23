@@ -422,9 +422,10 @@ def pending_requests():
 
         conn = db_connect()
         cursor = conn.cursor()
-        # Fetch requests where user is payer (to approve/deny)
         cursor.execute('''
-            SELECT pr.id, pr.requester_id, u.name as requester_name, pr.amount_cents, pr.status, pr.created_at
+            SELECT pr.id, pr.requester_id, u.name as requester_name, 
+                   u.phone as requester_phone, pr.amount_cents, 
+                   pr.status, pr.created_at
             FROM pending_requests pr
             JOIN users u ON pr.requester_id = u.id
             WHERE pr.payer_id = ? AND pr.status = 'pending'
@@ -433,15 +434,18 @@ def pending_requests():
         requests_data = cursor.fetchall()
 
         requests_list = []
-        for id, requester_id, requester_name, amount_cents, status, created_at in requests_data:
+        for id, requester_id, requester_name, requester_phone, amount_cents, status, created_at in requests_data:
             requests_list.append({
                 'id': id,
                 'requester_id': requester_id,
                 'requester_name': requester_name,
+                'requester_phone': requester_phone,
                 'amount': amount_cents / 100.0,
                 'status': status,
                 'created_at': created_at
             })
+        print(f"Debug - Request data: {requests_list}")  # Add this debug line
+
 
         conn.close()
         return jsonify(requests_list)
@@ -675,6 +679,9 @@ def get_groups():
                 member_ids = json.loads(member_ids_json)
             except json.JSONDecodeError:
                 member_ids = []
+            
+            if creator_id is not None and creator_id not in member_ids:
+                member_ids.append(creator_id)
             
             groups_list.append({
                 'id': id,

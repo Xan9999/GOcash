@@ -9,13 +9,13 @@ const SplitConfirmScreen = ({
   users,
   splitAmountInput,
   setSplitAmountInput,
-  shares, // This is now the array of WEIGHTS
-  userSharePercent, // This is now the user's WEIGHT
+  shares,
+  userSharePercent,
   handleUserShareChange,
   handleOtherShareChange,
   handleConfirmSplit,
   equalizeShares,
-  memoizedAmounts, // Contains proportional amounts and percentages
+  memoizedAmounts,
   loading,
   message,
   setCurrentScreen,
@@ -23,6 +23,17 @@ const SplitConfirmScreen = ({
   setShares,
   setUserSharePercent
 }) => {
+  React.useEffect(() => {
+    // Reset amount input
+    setSplitAmountInput('');
+    
+    // Reset all shares to 50
+    setShares(Array(splitSelectedIds.length).fill(50));
+    
+    // Reset user share to 50
+    setUserSharePercent(50);
+  }, []); // Empty dependency array means this runs once when component mounts
+
   if (splitSelectedIds.length === 0) {
     Alert.alert("Error", "No recipients selected for split. Returning to selection.");
     setCurrentScreen('split');
@@ -104,7 +115,6 @@ const SplitConfirmScreen = ({
             value={splitAmountInput}
             onChangeText={setSplitAmountInput}
             keyboardType="decimal-pad"
-            placeholderTextColor="#999"
             selectTextOnFocus={false}
             contextMenuHidden={true}
             blurOnSubmit={false}
