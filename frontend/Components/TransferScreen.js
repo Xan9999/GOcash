@@ -33,7 +33,7 @@ const TransferScreen = ({
     </TouchableOpacity>
     <Text style={styles.title}>
       {isRequestFlow ? 
-        `Zahteva za plačilo` : 
+        `Zahtevek za plačilo` : 
         `Nakaži denar`
       }
     </Text>
@@ -66,7 +66,7 @@ const TransferScreen = ({
       disabled={loading}
       activeOpacity={0.7}
     >
-      <Text style={styles.confirmButtonText}>{isRequestFlow ? 'Potrdi' : 'Potrdi'}</Text>
+      <Text style={styles.confirmButtonText}>{isRequestFlow ? 'Pošlji zahtevek' : 'Nakaži'}</Text>
     </TouchableOpacity>
     {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
     {message ? <Text style={styles.message}>{message}</Text> : null}
