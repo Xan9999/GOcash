@@ -680,6 +680,9 @@ def get_groups():
             except json.JSONDecodeError:
                 member_ids = []
             
+            if creator_id is not None and creator_id not in member_ids:
+                member_ids.append(creator_id)
+            
             groups_list.append({
                 'id': id,
                 'name': name,

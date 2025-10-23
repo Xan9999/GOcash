@@ -442,6 +442,9 @@ const btnImages = {
   const handleConfirmSelection = (selectedIds) => {
     if (selectedIds.length > 0) {
       setShares(Array(selectedIds.length).fill(50));
+      setUserSharePercent(50);
+      setSplitAmountInput('');
+
       setCurrentScreen('split_confirm');
     } else {
       Alert.alert('No Selection', 'Please select at least one person.');
