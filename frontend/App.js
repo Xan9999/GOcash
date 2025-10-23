@@ -695,7 +695,7 @@ const btnImages = {
   // --- Main App Renderer and Router ---
   return (
     <ImageBackground
-      style={styles.background}
+      style={styles.darkContainer}
       resizeMode="cover"
     >
       <View style={styles.container}>

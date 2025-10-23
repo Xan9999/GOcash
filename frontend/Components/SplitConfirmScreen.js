@@ -77,7 +77,6 @@ const SplitConfirmScreen = ({
         style={styles.container} 
         keyboardShouldPersistTaps="always" 
         contentContainerStyle={{ 
-          paddingHorizontal: 20, 
           paddingBottom: 120, // NEW: Add padding to prevent content from being obscured by fixed buttons
           flexGrow: 1 
         }}

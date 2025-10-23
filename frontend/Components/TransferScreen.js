@@ -60,12 +60,12 @@ const TransferScreen = ({
       />
     </View>
     <TouchableOpacity
-      style={[styles.confirmButton, {alignSelf:'center', width: '30%', marginTop: 30, height: 50 }]}
+      style={[styles.confirmButton, {alignSelf:'center', width: '40%', marginTop: 30, height: 50 }]}
       onPress={handleConfirmTransfer}
       disabled={loading}
       activeOpacity={0.7}
     >
-      <Text style={styles.confirmButtonText}>{isRequestFlow ? 'Pošlji zahtevek' : 'Nakaži'}</Text>
+      <Text style={styles.confirmButtonText}>{isRequestFlow ? 'Pošlji' : 'Nakaži'}</Text>
     </TouchableOpacity>
     {loading && <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />}
     {message ? <Text style={styles.message}>{message}</Text> : null}
