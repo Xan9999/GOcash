@@ -27,6 +27,7 @@ import GroupCreationScreen from './Components/GroupCreationScreen';
 import ReceiveQrScreen from './Components/ReceiveQrScreen'; // NEW
 import { renderLoginUser } from './Components/Renderers';
 import TransactionScreen from './Components/TransactionScreen';
+import RequestDetailScreen from './Components/RequestDetailScreen'; // NEW
 
 // Add image requires (place after imports)
 const btnImages = {
@@ -49,8 +50,9 @@ const btnImages = {
   const [showLogin, setShowLogin] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   // Updated comment: 'receive_qr' added
-  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'contacts', 'transfer', 'requests', 'split', 'split_confirm', 'group_create', 'receive_qr'
+  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'contacts', 'transfer', 'requests', 'request_detail', 'split', 'split_confirm', 'group_create', 'receive_qr'
   const [selectedRecipient, setSelectedRecipient] = useState(null); // For transfer/request
+  const [selectedRequest, setSelectedRequest] = useState(null); // NEW: For request detail
   const [isRequestFlow, setIsRequestFlow] = useState(false); // Send vs Request mode
   const [pendingRequests, setPendingRequests] = useState([]); // For requests screen
   const [amountInput, setAmountInput] = useState(''); // Amount input, default 10
@@ -71,7 +73,7 @@ const btnImages = {
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
-  const API_BASE = 'http://192.168.0.115:5000'; // Keep this here as it's logic/config
+  const API_BASE = 'http://192.168.0.109:5000'; // Keep this here as it's logic/config
 
   // Notification setup (mobile only, with token registration after login)
   useEffect(() => {
@@ -354,115 +356,119 @@ const btnImages = {
       //   `Success: ${isRequestFlow ? 'Request sent' : 'Money sent'} for €${amountInput}!`
       // );
       setSelectedRecipient(null);
-      setAmountInput('10');
-      setCurrentScreen('home');  // Back to home after action
-      await fetchUsers();  // Refresh balances
+      setAmountInput('');
+      setIsRequestFlow(false);
+      setCurrentScreen('home');
+      fetchPendingRequests();
+      fetchTransactions();
     } catch (error) {
-      console.error('Transfer/Request error:', error);
-      setMessage(`Error: ${error.message}`);
-      Alert.alert('Error', error.message);
+      console.error('Transfer error:', error);
+      Alert.alert('Transfer Error', error.message);
     }
     setLoading(false);
   };
-  
-  const handleApproveRequest = async (requestId, amount_cents, requesterName) => {
+
+  // NEW: Approve Request Handler
+  const handleApproveRequest = async (request) => {
+    if (!currentUser || !request) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/approve_request/${requestId}`, {
+      const body = {
+        payer_iban: currentUser.iban,
+        receiver_iban: request.requester_iban,
+        amount_cents: request.amount
+      };
+      const response = await fetch(`${API_BASE}/approve_request/${request.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount_cents }),
+        body: JSON.stringify(body),
       });
-      if (!response.ok) throw new Error('Failed to approve');
-      const data = await response.json();
-      // setMessage(`Approved request! Sent €${(amount_cents/100).toFixed(2)} to ${requesterName}.`);
-      
-      const remainingCount = await fetchPendingRequests(); // Fetch and get new count
-      fetchUsers(); // Update balances
-
-      // V1: Navigate back to home if no more requests
-      if (remainingCount === 0) {
-        setCurrentScreen('home');
+      const responseText = await response.text();
+      console.log('Approve response status:', response.status, 'body:', responseText);
+      if (!response.ok) {
+        let errorMsg = `Failed to approve: HTTP ${response.status}`;
+        try {
+          const errorJson = JSON.parse(responseText);
+          errorMsg += ` - ${errorJson.error || 'Unknown error'}`;
+        } catch {}
+        throw new Error(errorMsg);
       }
-
+      await fetchPendingRequests();
+      await fetchTransactions();
+      setMessage('Zahteva odobrena in plačana!');
     } catch (error) {
-      Alert.alert('Error', error.message);
+      console.error('Approve error:', error);
+      Alert.alert('Napaka', error.message);
     }
     setLoading(false);
   };
 
-  const handleDenyRequest = async (requestId, requesterName, amount_cents) => {
+  // NEW: Deny Request Handler
+  const handleDenyRequest = async (request) => {
+    if (!currentUser || !request) return;
+    setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/deny_request/${requestId}`, {
+      const response = await fetch(`${API_BASE}/deny_request/${request.id}`, {
         method: 'POST',
       });
-      if (!response.ok) throw new Error('Failed to deny');
-       // setMessage(`Denied request from ${requesterName} for €${(amount_cents/100).toFixed(2)}.`);
-      
-      const remainingCount = await fetchPendingRequests(); // Fetch and get new count
-
-      // V1: Navigate back to home if no more requests
-      if (remainingCount === 0) {
-        setCurrentScreen('home');
+      const responseText = await response.text();
+      console.log('Deny response status:', response.status, 'body:', responseText);
+      if (!response.ok) {
+        let errorMsg = `Failed to deny: HTTP ${response.status}`;
+        try {
+          const errorJson = JSON.parse(responseText);
+          errorMsg += ` - ${errorJson.error || 'Unknown error'}`;
+        } catch {}
+        throw new Error(errorMsg);
       }
-
+      await fetchPendingRequests();
+      setMessage('Zahteva zavrnjena.');
     } catch (error) {
-      Alert.alert('Error', error.message);
+      console.error('Deny error:', error);
+      Alert.alert('Napaka', error.message);
+    }
+    setLoading(false);
+  };
+
+  // Split selection handlers (assuming these exist from original code)
+  const toggleSplitSelect = (userId) => {
+    setSplitSelectedIds(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleConfirmSelection = (selectedIds) => {
+    if (selectedIds.length > 0) {
+      setShares(Array(selectedIds.length).fill(50));
+      setCurrentScreen('split_confirm');
+    } else {
+      Alert.alert('No Selection', 'Please select at least one person.');
     }
   };
 
-  // --- Split Handlers ---
-  const toggleSplitSelect = (userId) => {
-    setSplitSelectedIds(prev => {
-      // Ensure we treat IDs as numbers for strict comparison if they came from JSON (member_ids)
-      const numericId = parseInt(userId);
-      if (prev.includes(numericId)) return prev.filter(id => id !== numericId);
-      return [...prev, numericId];
+  const handleUserShareChange = (value) => {
+    setUserSharePercent(value);
+  };
+
+  const handleOtherShareChange = (index, value) => {
+    setShares(prev => {
+      const newShares = [...prev];
+      newShares[index] = value;
+      return newShares;
     });
   };
 
-  // Updated to take optional memberIds (used when selecting a group)
-  const handleConfirmSelection = (memberIdsToConfirm) => {
-    const numSelected = memberIdsToConfirm.length; // Total people involved in split
-
-    setShares([]);
-    setUserSharePercent(0);
-
-    if (numSelected === 0) {
-      setMessage('Please select at least one recipient to split the amount.');
-      return;
-    }
-
-    const defaultShare = 50;
-    const otherMemberIds = memberIdsToConfirm
-    setUserSharePercent(defaultShare); 
-    const newShares = otherMemberIds.map(() => defaultShare);
-    setShares(newShares);
-
-    
-    setCurrentScreen('split_confirm');
-    setMessage('');
-  };
-
-  // HANDLERS now update the WEIGHT directly (0-100)
-  const handleUserShareChange = (newWeight) => {
-    setUserSharePercent(Math.max(0, newWeight));
-  };
-
-  const handleOtherShareChange = (index, newWeight) => {
-    const newShares = [...shares];
-    newShares[index] = Math.max(0, newWeight);
-    setShares(newShares);
-  };
-
   const equalizeShares = () => {
-    // Set all weights to 50 for a proportional split that aligns with the initial midpoint
-    const initialWeight = 50;
-    setShares(Array(splitSelectedIds.length).fill(initialWeight));
-    setUserSharePercent(initialWeight);
+    const numOthers = splitSelectedIds.length;
+    if (numOthers === 0) return;
+    const equalWeight = 100 / (numOthers + 1);
+    setUserSharePercent(equalWeight);
+    setShares(Array(numOthers).fill(equalWeight));
   };
 
-  // CORE LOGIC: Calculate amounts and percentages based on proportional weights
+  // Memoized calculation for split: Calculate amounts and percentages based on proportional weights
   const memoizedAmounts = useMemo(() => {
     const total = parseFloat(splitAmountInput) || 0;
     // allPercents are now treated as weights
@@ -754,9 +760,18 @@ const btnImages = {
         {!showLogin && currentScreen === 'requests' && (
           <RequestsScreen 
             pendingRequests={pendingRequests}
+            setCurrentScreen={setCurrentScreen}
+            setSelectedRequest={setSelectedRequest}
+          />
+        )}
+        {!showLogin && currentScreen === 'request_detail' && (
+          <RequestDetailScreen
+            selectedRequest={selectedRequest}
+            currentUser={currentUser}
             handleApproveRequest={handleApproveRequest}
             handleDenyRequest={handleDenyRequest}
             setCurrentScreen={setCurrentScreen}
+            loading={loading}
           />
         )}
         {!showLogin && currentScreen === 'transactions' && (
@@ -828,7 +843,7 @@ const btnImages = {
         )}
 
         {/* Message bar for home, contacts, requests, split selection, group creation */}
-        {message && !showLogin && currentScreen !== 'transfer' && currentScreen !== 'split_confirm' && (
+        {message && !showLogin && currentScreen !== 'transfer' && currentScreen !== 'split_confirm' && currentScreen !== 'request_detail' && (
             <View style={{ padding: 10, backgroundColor: 'rgba(0,0,0,0.5)' }}>
                 <Text style={styles.message}>{message}</Text>
             </View>
