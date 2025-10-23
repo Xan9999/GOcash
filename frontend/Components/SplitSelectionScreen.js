@@ -63,7 +63,7 @@ const SplitSelectionScreen = ({
         >
           <View style={styles.userInfo}>
             <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.detailLabel}>{item.email}</Text>
+            <Text style={styles.detailLabel}>{item.phone}</Text>
           </View>
           {/* Action text removed as requested */}
         </TouchableOpacity>
@@ -96,7 +96,7 @@ const SplitSelectionScreen = ({
       </View>
       
       {loading ? (
-        <ActivityIndicator size="large" color="#61dafb" style={styles.loadingSpinner} />
+        <ActivityIndicator size="large" color="green" style={styles.loadingSpinner} />
       ) : (
         <FlatList
           data={listData}
