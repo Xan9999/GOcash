@@ -1,15 +1,26 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
 import styles from '../Styles';
-import { renderPendingRequest } from './Renderers';
 
 const RequestsScreen = ({
   pendingRequests,
-  handleApproveRequest,
-  handleDenyRequest,
-  setCurrentScreen
+  setCurrentScreen,
+  setSelectedRequest
 }) => {
-  const requestRenderer = renderPendingRequest(styles, handleApproveRequest, handleDenyRequest);
+  const renderRequestItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.pendingRequestItem}
+      onPress={() => {
+        setSelectedRequest(item);
+        setCurrentScreen('request_detail');
+      }}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.pendingRequestText}>
+        {item.requester_name}: €{(item.amount / 100).toFixed(2)}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -23,7 +34,7 @@ const RequestsScreen = ({
       <Text style={styles.title}>Zahteve</Text>
       <FlatList
         data={pendingRequests}
-        renderItem={requestRenderer}
+        renderItem={renderRequestItem}
         keyExtractor={(item) => item.id.toString()}
         style={styles.list}
         ListEmptyComponent={<Text style={styles.emptyText}>Ni zahtev.</Text>}
