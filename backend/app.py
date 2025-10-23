@@ -192,11 +192,6 @@ def init_db():
             INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, request_ref)
             VALUES ('request_sent', ?, ?, ?, 'pending', last_insert_rowid())
         ''', (2, 1, 500))
-        # request_received: from payer (Alice id=1) to requester (Bob id=2)
-        cursor.execute('''
-            INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, request_ref)
-            VALUES ('request_received', ?, ?, ?, 'pending', (SELECT id FROM pending_requests WHERE id = last_insert_rowid()))
-        ''', (1, 2, 500))
         
         # --- NEW: Seed a Group ---
         # Assuming users 1 (Alice) and 2 (Bob) and 3 (Charlie) exist
@@ -335,11 +330,6 @@ def request_money():
             INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, memo, request_ref)
             VALUES ('request_sent', ?, ?, ?, 'pending', ?, ?)
         ''', (requester_id, payer_id, amount_cents, memo, request_id))
-        # request_received from payer's perspective
-        cursor.execute('''
-            INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, memo, request_ref)
-            VALUES ('request_received', ?, ?, ?, 'pending', ?, ?)
-        ''', (payer_id, requester_id, amount_cents, memo, request_id))
 
         conn.commit()
 
@@ -481,12 +471,6 @@ def approve_request(request_id):
         # Transfer funds (debit payer, credit requester)
         cursor.execute('UPDATE bank_balances SET balance_cents = balance_cents - ? WHERE iban = (SELECT iban FROM users WHERE id = ?)', (amount_cents, payer_id))
         cursor.execute('UPDATE bank_balances SET balance_cents = balance_cents + ? WHERE iban = (SELECT iban FROM users WHERE id = ?)', (amount_cents, requester_id))
-        
-        # Insert approved transaction log (single row for the approval/transfer)
-        cursor.execute('''
-            INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, request_ref)
-            VALUES ('request_approved', ?, ?, ?, 'completed', ?)
-        ''', (payer_id, requester_id, amount_cents, request_id))
 
         # Update the original request transaction logs status
         cursor.execute('''
@@ -527,12 +511,6 @@ def deny_request(request_id):
 
         # Update request status
         cursor.execute('UPDATE pending_requests SET status = "denied" WHERE id = ?', (request_id,))
-        
-        # Insert denied transaction log
-        cursor.execute('''
-            INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, request_ref)
-            VALUES ('request_denied', ?, ?, ?, 'rejected', ?)
-        ''', (payer_id, requester_id, amount_cents, request_id))
 
         # Update the original request transaction logs status
         cursor.execute('''
@@ -613,11 +591,7 @@ def split_request():
                 INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, memo, request_ref)
                 VALUES ('request_sent', ?, ?, ?, 'pending', ?, ?)
             ''', (payer_id, recipient_id, amount_cents, memo, request_id))
-            # request_received
-            cursor.execute('''
-                INSERT INTO transactions (type, initiator_id, target_id, amount_cents, status, memo, request_ref)
-                VALUES ('request_received', ?, ?, ?, 'pending', ?, ?)
-            ''', (recipient_id, payer_id, amount_cents, memo, request_id))
+
             
             # Send notification to the recipient/payer
             token = get_user_token(recipient_id)
