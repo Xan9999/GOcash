@@ -196,14 +196,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     padding: 10,
   },
-  actionText: {
-    color: '#61dafb',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  disabledText: {
-    color: '#999',
-  },
   name: {
     fontWeight: 'bold',
     color: '#000000ff',
@@ -219,12 +211,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000000ff',
     fontSize: 16,
-  },
-  contactBalance: {
-    marginTop: 6,
-    color: '#007AFF',
-    fontWeight: 'bold',
-    fontSize: 14,
   },
   groupRowText: {
     fontWeight: 'bold',
