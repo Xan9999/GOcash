@@ -143,9 +143,9 @@ const SplitConfirmScreen = ({
                   ? handleUserShareChange(value)
                   : handleOtherShareChange(item.shareIndex, value)
               }
-              minimumTrackTintColor="#FF9800"
+              minimumTrackTintColor="green"
               maximumTrackTintColor="#ddd"
-              thumbTintColor="#FF9800"
+              thumbTintColor="#0d6b0fff"
               step={100}
             />
           </View>
@@ -153,7 +153,7 @@ const SplitConfirmScreen = ({
       ))}
       <View style={styles.container_splitconfirm_buttons}>  
         <TouchableOpacity
-          style={styles.splitButton}
+          style={styles.splitconfirm_button}
           onPress={equalizeShares}
           activeOpacity={0.7}
         >
