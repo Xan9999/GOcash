@@ -215,9 +215,7 @@ const btnImages = {
       const response = await fetch(`${API_BASE}/pending_requests?user_id=${currentUser.id}`);
       if (!response.ok) throw new Error('Failed to fetch requests');
       const data = await response.json();
-      console.log('Raw pending requests response:', JSON.stringify(data, null, 2));
       setPendingRequests(data);
-      console.log('Pending requests updated:', data.length);
       return data.length;
     } catch (error) {
       console.error('Requests fetch error:', error);
