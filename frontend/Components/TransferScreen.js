@@ -49,7 +49,6 @@ const TransferScreen = ({
         value={amountInput}
         onChangeText={setAmountInput}
         keyboardType="decimal-pad"
-        placeholder="10"
         placeholderTextColor="#999"
         selectTextOnFocus={false}
         contextMenuHidden={true}

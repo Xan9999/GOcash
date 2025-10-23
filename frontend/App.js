@@ -53,13 +53,13 @@ const btnImages = {
   const [selectedRecipient, setSelectedRecipient] = useState(null); // For transfer/request
   const [isRequestFlow, setIsRequestFlow] = useState(false); // Send vs Request mode
   const [pendingRequests, setPendingRequests] = useState([]); // For requests screen
-  const [amountInput, setAmountInput] = useState('10'); // Amount input, default 10
+  const [amountInput, setAmountInput] = useState(''); // Amount input, default 10
   const [transactions, setTransactions] = useState([]);
   const [refreshingTransactions, setRefreshingTransactions] = useState(false);
 
   // For split: NOTE: These are now treated as WEIGHTS (0-100), not fixed percentages.
   const [splitSelectedIds, setSplitSelectedIds] = useState([]); // array of user ids selected
-  const [splitAmountInput, setSplitAmountInput] = useState('30'); // total bill in euros
+  const [splitAmountInput, setSplitAmountInput] = useState(''); // total bill in euros
   // Setting initial weights to 50 for a middle-point starting position
   const [shares, setShares] = useState([]); // Array of WEIGHTS (0-100) for each selected user
   const [userSharePercent, setUserSharePercent] = useState(50); // User's WEIGHT, starts at 50
@@ -304,7 +304,7 @@ const btnImages = {
 
   const handleSelectRecipient = (recipient) => {
     setSelectedRecipient(recipient);
-    setAmountInput('10'); // Reset amount
+    setAmountInput(''); // Reset amount
     setCurrentScreen('transfer');
     setMessage(''); // Clear message
   };
@@ -558,7 +558,7 @@ const btnImages = {
       setSplitSelectedIds([]);
       setShares([]);
       setUserSharePercent(50); // Reset to 50
-      setSplitAmountInput('30');
+      setSplitAmountInput('');
       setCurrentScreen('home');
       fetchPendingRequests();
     } catch (error) {
