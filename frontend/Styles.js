@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
 
   topRightButton: {
     position: 'absolute',
-    top: 50,
+    top: 40,
     right: 20,
     padding: 10,
   },

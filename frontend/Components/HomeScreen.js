@@ -1,4 +1,3 @@
-// Updated HomeScreen.js to add Transaction History button
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import styles from '../Styles';
@@ -18,6 +17,11 @@ const HomeScreen = ({
 
   return (
     <View style={styles.centeredContainer}>
+
+      {currentUser && currentUser.name ? (
+        <Text style={[styles.detailLabel, styles.backButton]}>{currentUser.name}</Text>
+      ) : null}
+
       <TouchableOpacity
         style={styles.topRightButton}
         onPress={() => console.log('Scan QR button pressed - does nothing yet')}
