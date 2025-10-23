@@ -79,13 +79,13 @@ const styles = StyleSheet.create({
   },
   footerContainer: {
     position: 'absolute',
-    bottom: 40, // lift it slightly above screen edge
+    bottom: 25, // lift it slightly above screen edge
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 0,
+    paddingHorizontal: 50,
   },
 
   list: {
@@ -470,8 +470,8 @@ const styles = StyleSheet.create({
     zIndex: 10, // Ensure it's above other elements
   },
   headerIcon: {
-    width: 30, // Smaller than circle button icons
-    height: 30,
+    width: 40, // Smaller than circle button icons
+    height: 40,
     tintColor: '#006400', // DarkGreen to match the Flik 2 title
   },
   button_group_Icon: {

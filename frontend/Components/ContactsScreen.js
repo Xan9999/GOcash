@@ -24,25 +24,29 @@ const ContactsScreen = ({
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={styles.backButton} // Apply new padding style
+        style={styles.backButton}
         onPress={() => setCurrentScreen('home')}
         activeOpacity={0.7}
       >
         <Image source={require('../assets/backarrow.png')} style={styles.headerIcon} />
       </TouchableOpacity>
-      <Text style={styles.title}>{isRequestFlow ? 'Zahtevek za plačilo' : 'Nakaži denar'}</Text>
+
+      <Text style={styles.title}>
+        {isRequestFlow ? 'Zahtevek za plačilo' : 'Nakaži denar'}
+      </Text>
+
       {isRequestFlow && (
         <TouchableOpacity
-          style={
-            styles.topRightButton
-            }
+          style={styles.topRightButton}
           onPress={() => setCurrentScreen('receive_qr')}
           activeOpacity={0.7}
         >
-          <Image source={btnImages.qr} style={styles.headerIcon} /> 
+          <Image source={btnImages.qr} style={styles.headerIcon} />
         </TouchableOpacity>
-      )}      <FlatList
-        data={filteredUsers} // Use the filtered list
+      )}
+
+      <FlatList
+        data={filteredUsers}
         renderItem={userRenderer}
         keyboardShouldPersistTaps="always"
         keyExtractor={(item) => item.id.toString()}
@@ -52,7 +56,11 @@ const ContactsScreen = ({
         }}
         style={styles.list}
         contentContainerStyle={{ paddingBottom: 50 }}
-        ListEmptyComponent={<Text style={styles.emptyText}>No other users found.</Text>}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer || { padding: 16 }}>
+            <Text style={styles.emptyText}>No other users found.</Text>
+          </View>
+        )}
       />
     </View>
   );
