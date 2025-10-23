@@ -146,7 +146,7 @@ const SplitConfirmScreen = ({
               minimumTrackTintColor="green"
               maximumTrackTintColor="#ddd"
               thumbTintColor="#0d6b0fff"
-              step={100}
+              step={1}
             />
           </View>
         </View>

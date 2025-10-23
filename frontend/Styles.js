@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(234, 255, 234, 0.9)',
+    backgroundColor: 'rgba(235, 248, 235, 0.9)',
   },
   darkContainer: {
     flex: 1,
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   groupRowText: {
     fontWeight: 'bold',
-    color: '#2C3E50',
+    color: 'green',
     fontSize: 20,
   },
 
@@ -355,13 +355,15 @@ const styles = StyleSheet.create({
   },
   groupCreateButton: {
     flexDirection: 'row',
-    backgroundColor: '#FF9800',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     width: '33%',
     height: 50,
     padding: 15,
     borderRadius: 8,
+    borderWidth: 3,
+    borderColor: 'green',
   },
 
   // MARK: Positional/Utility
@@ -426,13 +428,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   groupRow: {
-    backgroundColor: '#e6f7ff',
+    backgroundColor: '#e8f5e9',
     borderLeftWidth: 5,
-    borderLeftColor: '#61dafb',
+    borderLeftColor: 'green',
   },
   splitSelectedRow: {
     borderWidth: 2,
-    borderColor: '#FF9800',
+    borderColor: 'green',
   },
   disabledRow: {
     opacity: 0.5,
