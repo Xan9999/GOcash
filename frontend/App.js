@@ -73,7 +73,7 @@ const btnImages = {
 
   // Auto-fetch projectId from app.json
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
-  const API_BASE = 'http://192.168.0.115:5000'; // Keep this here as it's logic/config
+  const API_BASE = 'http://192.168.0.109:5000'; // Keep this here as it's logic/config
 
   // Notification setup (mobile only, with token registration after login)
   useEffect(() => {
@@ -215,15 +215,15 @@ const btnImages = {
       const response = await fetch(`${API_BASE}/pending_requests?user_id=${currentUser.id}`);
       if (!response.ok) throw new Error('Failed to fetch requests');
       const data = await response.json();
+      console.log('Raw pending requests response:', JSON.stringify(data, null, 2));
       setPendingRequests(data);
       console.log('Pending requests updated:', data.length);
-      return data.length; // Return count for approval logic
+      return data.length;
     } catch (error) {
       console.error('Requests fetch error:', error);
       return 0;
     }
   };
-
   const fetchTransactions = async () => {
     if (!currentUser) return;
     console.log('Fetching transactions...');

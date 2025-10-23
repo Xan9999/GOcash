@@ -16,9 +16,14 @@ const RequestsScreen = ({
       }}
       activeOpacity={0.7}
     >
-      <Text style={styles.pendingRequestText}>
-        {item.requester_name}: €{(item.amount / 100).toFixed(2)}
-      </Text>
+      <View>
+        <Text style={styles.pendingRequestText}>
+          {item.requester_name}: €{(item.amount).toFixed(2)}
+        </Text>
+        <Text style={styles.detailLabel}>
+          Phone  {item.requester_phone}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 
