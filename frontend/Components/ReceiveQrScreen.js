@@ -2,7 +2,7 @@ import React, { useState, memo, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, Image, Platform, Animated } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import styles from '../Styles'; 
-const fakeQrPlaceholderImage = require('../assets/Example_QR_code.png'); 
+const qrImage = require('../assets/Example_QR_code.png'); 
 const INITIAL_TIMEOUT_SECONDS = 30;
 
 // Visual constants
@@ -184,8 +184,6 @@ const ReceiveQrScreen = ({
                 setShowQr(false);
               }}
               keyboardType="decimal-pad"
-              placeholder="10"
-              placeholderTextColor="#999"
               selectTextOnFocus={false}
               contextMenuHidden={true}
               blurOnSubmit={false}
@@ -216,7 +214,7 @@ const ReceiveQrScreen = ({
           <Text style={styles.subtitle}>Skeniraj za plačilo €{parseFloat(String(localAmount).replace(',', '.') || 0).toFixed(2)}</Text>
           
           <Image 
-            source={fakeQrPlaceholderImage} 
+            source={qrImage} 
             style={{ width: 300, height: 300, marginVertical: 20 }} 
             resizeMode="contain" 
           />
