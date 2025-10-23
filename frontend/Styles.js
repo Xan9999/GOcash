@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
   container_splitconfirm_buttons: {
     flexDirection: 'row',
     padding: 20,
-    height: 80,
+    height: 100,
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'space-between',

@@ -129,7 +129,7 @@ const SplitConfirmScreen = ({
               style={styles.amountdetailLabelRight}
               selectable={false}
             >
-              Pays: €{item.amount.toFixed(2)}
+              Prispeva: {item.amount.toFixed(2)}€
             </Text>
 
           </View>
@@ -147,7 +147,7 @@ const SplitConfirmScreen = ({
               minimumTrackTintColor="#FF9800"
               maximumTrackTintColor="#ddd"
               thumbTintColor="#FF9800"
-              step={1}
+              step={100}
             />
           </View>
         </View>
@@ -158,8 +158,8 @@ const SplitConfirmScreen = ({
           onPress={equalizeShares}
           activeOpacity={0.7}
         >
-          <Text style={[styles.confirmButtonText, {top: 20}]}>Enakomerno razdeli</Text>
-          <Image source={require('../assets/equalsplit.png')} style={[styles.icon, {position: 'relative', right: 120, bottom: 10}]} />
+          <Text style={[styles.confirmButtonText, {alignSelf: 'center', position: 'absolute ', right:'20%'}]}>Razdeli</Text>
+          <Image source={require('../assets/equalsplit.png')} style={[styles.icon, {alignSelf: 'center', position: 'absolute  ', left: '20%'}]} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -168,8 +168,8 @@ const SplitConfirmScreen = ({
           disabled={loading || total <= 0 || totalWeight === 0}
           activeOpacity={0.7}
         >
-          <Text style={[styles.confirmButtonText, {top: 20}]}>Ustvari prošnjo</Text>
-          <Image source={require('../assets/money.png')} style={[styles.icon, {position: 'relative', right: 100, bottom: 10}]} />
+          <Text style={[styles.confirmButtonText, {alignSelf: 'center', position: 'absolute', right:'20%'}]}>Pošlji</Text>
+          <Image source={require('../assets/money.png')} style={[styles.icon, {alignSelf: 'center', position: 'absolute', left: '20%'}]} />
         </TouchableOpacity>
       </View>
 

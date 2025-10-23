@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import TestScreen from './Requests';
 import styles from '../Styles';
 
 // Renderer for the initial login screen user list
@@ -50,17 +51,20 @@ export const renderSplitUser = (styles, toggleSplitSelect, splitSelectedIds) => 
   );
 };
 
-
-// In Renderers.js - export const renderPendingRequest = (styles, onApprove, onDeny) => ({ item }) => (
-export const renderPendingRequest = (styles, onApprove, onDeny) => ({ item }) => {
+// Renderer for pending requests
+export const renderPendingRequest = (styles, onApprove, onDeny, setCurrentScreen) => ({ item }) => {
   // Safe amount formatting: Convert to number, default to 0, then format
   const safeAmount = Number(item.amount || 0).toFixed(2);
   
   return (
-    <View style={styles.requestRow}>
+    <TouchableOpacity
+      style={styles.requestRow}
+      activeOpacity={0.7}
+      onPress={() => setCurrentScreen('test', { requestId: item.id, amount: item.amount })}
+    >
       <View style={styles.requestInfo}>
         <Text style={styles.requestRequester}>
-          Od: {item.requester_name}   {safeAmount}€ 
+          Od: {item.requester_name}   {safeAmount}€
         </Text>
         <Text style={styles.requestInfo}>
           Prejet zahtevek za plačilo v znesku
@@ -71,20 +75,20 @@ export const renderPendingRequest = (styles, onApprove, onDeny) => ({ item }) =>
       </View>
       <View style={styles.requestActions}>
         <TouchableOpacity
-          style={[styles.approveButton, { backgroundColor: '#4CAF50', right: 100, position: 'absolute', }]}
-          onPress={() => onApprove(item.id, item.amount * 100)}  // Pass cents back
+          style={[styles.approveButton, { backgroundColor: '#4CAF50', right: 100, position: 'absolute' }]}
+          onPress={() => onApprove(item.id, item.amount * 100)} // Pass cents back
           activeOpacity={0.7}
         >
           <Text style={styles.buttonText}>Plačaj</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.denyButton, { backgroundColor: '#f44336' , right:10}]}
+          style={[styles.denyButton, { backgroundColor: '#f44336', right: 10 }]}
           onPress={() => onDeny(item.id)}
           activeOpacity={0.7}
         >
           <Text style={styles.buttonText}>Zavrni</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
