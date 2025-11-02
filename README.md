@@ -6,9 +6,12 @@ A Hackathon project. A cash transfer application similar to flik. Transfer cash,
 
 # How to start app and frontend
 
-backend/ 
-venv\Scripts\activate\
+##Backend
+backend\venv\Scripts\activate\
+
 python app.py  
 
+##Frontend
 frontend/
+
 npx expo start
