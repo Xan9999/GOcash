@@ -11,8 +11,8 @@ Ta demo vključuje stare načine pošiljanja in zahtevnja denarja, obogatene z n
 ## Slike
 
 <p align="center">
-  <img src="screenshots/home.png" alt="Home screen" width="25%" />
-  <img src="screenshots/split.png" alt="Home screen" width="25%" />
-  <img src="screenshots/group.png" alt="Home screen" width="25%" />
-  <img src="screenshots/qr.png" alt="Home screen" width="25%" />
+  <img src="screenshots/home.png" alt="Home screen"/>
+  <img src="screenshots/split.png" alt="Home screen" width="33%" />
+  <img src="screenshots/group.png" alt="Home screen" width="33%" />
+  <img src="screenshots/qr.png" alt="Home screen" width="33%" />
 </p>
