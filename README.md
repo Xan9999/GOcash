@@ -1,17 +1,8 @@
 # GoCash
-A Hackathon project. A cash transfer application similar to flik. Transfer cash, start deposit requests, make groups and split checks. 
-
-
-
-
-# How to start app and frontend
-
-## Backend
-backend\venv\Scripts\activate\
-
-python app.py  
-
-## Frontend
-frontend/
-
-npx expo start
+<p>Hekaton projekt - demo za **Flik 2.0**.</p>
+<p>
+Ta demo vključuje stare načine pošiljanja in zahtavnja denarja, obogatene z novimi funkcjonalnostimi:
+- Razdelitev plačila med več ljudmi
+- Ustvarjanje skupin za deljenje plačil
+- Deljenje zahtev za plačilo z QR kodo
+</p>
